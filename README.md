@@ -8,7 +8,7 @@ With this version you can use the following new options:
 * new platform -> notify.bmw_connected_drive_<your_car>
 
 #### Installation
-Place the directory `bmw_connected_drive` and all it's files in the folder `custom_components` in the config folder of HA (where configuration.yaml is).
+Place the folder `bmw_connected_drive` and all it's files in the folder `custom_components` in the config folder of HA (where configuration.yaml is).
 
 #### Pictures
 Here are some pictures, not too sharp but they give a good impression
