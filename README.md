@@ -11,7 +11,7 @@ With this version you can use the following new options:
 Place the folder `bmw_connected_drive` and all it's files in the folder `custom_components` in the config folder of HA (where configuration.yaml is).
 
 #### Pictures
-Here are some pictures, not too sharp but they give a good impression
+Here are some pictures, not too sharp and yeah it's a touch screen, but they give a good impression
 
 Overview of messages
 ![Example 1](/pictures/example_1.jpg)
