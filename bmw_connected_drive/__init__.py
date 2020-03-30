@@ -17,16 +17,14 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import track_utc_time_change
 import homeassistant.util.dt as dt_util
 
+from .const import LAT, LON, SUBJECT, TEXT
+
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "bmw_connected_drive"
 CONF_REGION = "region"
 CONF_READ_ONLY = "read_only"
 ATTR_VIN = "vin"
-TEXT = "text"
-SUBJECT = "subject"
-LAT = "lat"
-LON = "lon"
 
 ACCOUNT_SCHEMA = vol.Schema(
     {
