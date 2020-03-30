@@ -34,6 +34,7 @@ class BMWNotificationService(BaseNotificationService):
         _LOGGER.error("Init of BMWNotificationService setup") # TODO
         self.name = name
         self._vehicle = vehicle
+        self.targets = {vehicle.name: vehicle}
 
     def send_message(self, message="", **kwargs):
         """Send the message to the car."""
