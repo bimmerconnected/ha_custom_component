@@ -3,9 +3,26 @@ Home Assistant Custom Component of BMW Connected Drive
 
 ### This is for testing purposes only
 With this version you can use the following new options:
-* new service -> bmw_connected_drive.send_message
-* new service -> bmw_connected_drive.send_poi
-* new platform -> notify.bmw_connected_drive_<your_car>
+* Send notifications to your car
+* Send Point of Interest (POI) to your car
+
+You can test this by using Developer Tools - Services and select `notify.bmw_connected_drive_<car>`
+and for a message use these service data:
+```
+title: Your title here (if left empty it will be Home Assistant)
+message: Your message here
+```
+
+for a POI:
+```
+title: Send location
+message: POI
+data:
+  location:
+    latitude: 48.177024
+    longitude: 11.559107
+    name: The name of the location
+```
 
 #### Installation
 Place the folder `bmw_connected_drive` and all it's files in the folder `custom_components` in the config folder of HA (where configuration.yaml is).
