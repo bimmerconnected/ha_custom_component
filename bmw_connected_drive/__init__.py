@@ -5,19 +5,11 @@ from bimmer_connected.account import ConnectedDriveAccount
 from bimmer_connected.country_selector import get_region_from_name
 import voluptuous as vol
 
-from homeassistant.const import (
-    CONF_LATITUDE,
-    CONF_LONGITUDE,
-    CONF_NAME,
-    CONF_PASSWORD,
-    CONF_USERNAME,
-)
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers import discovery
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import track_utc_time_change
 import homeassistant.util.dt as dt_util
-
-from .const import LAT, LON, SUBJECT, TEXT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,22 +30,6 @@ ACCOUNT_SCHEMA = vol.Schema(
 CONFIG_SCHEMA = vol.Schema({DOMAIN: {cv.string: ACCOUNT_SCHEMA}}, extra=vol.ALLOW_EXTRA)
 
 SERVICE_SCHEMA = vol.Schema({vol.Required(ATTR_VIN): cv.string})
-SERVICE_SCHEMA_MESSAGE = vol.Schema(
-    {
-    vol.Required(ATTR_VIN): cv.string,  # TODO Can we reuse SERVICE_SCHEMA?
-    vol.Required(TEXT): vol.All(cv.string, vol.Length(min=1, max=255)),
-    vol.Optional(SUBJECT): cv.string,
-    }
-)
-SERVICE_SCHEMA_POI = vol.Schema(
-    {
-    vol.Required(ATTR_VIN): cv.string,   # TODO Can we reuse SERVICE_SCHEMA?
-    vol.Required(CONF_LATITUDE): cv.latitude,
-    vol.Required(CONF_LONGITUDE): cv.longitude,
-    vol.Optional(CONF_NAME): cv.string,
-    }
-)
-
 
 BMW_COMPONENTS = ["binary_sensor", "device_tracker", "lock", "notify", "sensor"]
 UPDATE_INTERVAL = 5  # in minutes
@@ -64,12 +40,6 @@ _SERVICE_MAP = {
     "light_flash": "trigger_remote_light_flash",
     "sound_horn": "trigger_remote_horn",
     "activate_air_conditioning": "trigger_remote_air_conditioning",
-}
-_SERVICE_MAP_MESSAGE = {
-    "send_message": "trigger_send_message",
-}
-_SERVICE_MAP_POI = {
-    "send_poi": "trigger_send_poi",
 }
 
 
@@ -92,7 +62,6 @@ def setup(hass, config: dict):
     _update_all(None)
 
     for component in BMW_COMPONENTS:
-        _LOGGER.debug("Loading component: %s", component) # TODO
         discovery.load_platform(hass, component, DOMAIN, {}, config)
 
     return True
@@ -123,51 +92,12 @@ def setup_account(account_config: dict, hass, name: str) -> "BMWConnectedDriveAc
         function_call = getattr(vehicle.remote_services, function_name)
         function_call()
 
-    def execute_service_message(call):
-        """Execute a service for sending a message to a vehicle.
-
-        This must be a member function as we need access to the cd_account
-        object here.
-        """
-        vin = call.data[ATTR_VIN]
-        vehicle = cd_account.account.get_vehicle(vin)
-        if not vehicle:
-            _LOGGER.error("Could not find a vehicle for VIN %s", vin)
-            return
-        function_name = _SERVICE_MAP_MESSAGE[call.service]
-        function_call = getattr(vehicle.remote_services, function_name)
-        function_call({TEXT: call.data[TEXT], SUBJECT: call.data[SUBJECT]})
-
-    def execute_service_poi(call):
-        """Execute a service for sending a Point of Interest to a vehicle.
-
-        This must be a member function as we need access to the cd_account
-        object here.
-        """
-        vin = call.data[ATTR_VIN]
-        vehicle = cd_account.account.get_vehicle(vin)
-        if not vehicle:
-            _LOGGER.error("Could not find a vehicle for VIN %s", vin)
-            return
-        function_name = _SERVICE_MAP_POI[call.service]
-        function_call = getattr(vehicle.remote_services, function_name)
-        function_call({LAT: call.data[CONF_LATITUDE], LON: call.data[CONF_LONGITUDE], CONF_NAME: call.data[CONF_NAME]})
-
     if not read_only:
         # register the remote services
         for service in _SERVICE_MAP:
             hass.services.register(
                 DOMAIN, service, execute_service, schema=SERVICE_SCHEMA
             )
-    for service in _SERVICE_MAP_MESSAGE:  # TODO for loop needed?
-        hass.services.register(
-            DOMAIN, service, execute_service_message, schema=SERVICE_SCHEMA_MESSAGE
-        )
-
-    for service in _SERVICE_MAP_POI:  # TODO for loop needed?
-        hass.services.register(
-            DOMAIN, service, execute_service_poi, schema=SERVICE_SCHEMA_POI
-        )
 
     # update every UPDATE_INTERVAL minutes, starting now
     # this should even out the load on the servers
