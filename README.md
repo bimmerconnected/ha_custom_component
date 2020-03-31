@@ -21,10 +21,10 @@ data:
   location:
     latitude: 48.177024
     longitude: 11.559107
-    street: "Street name"  # Optional
-    city: "city name"  # Optional
-    postalCode: "Some postal Code"  # Optional
-    country: "country"  # Optional
+    street: Street name  # Optional
+    city: City name  # Optional
+    postalCode: Some postal code  # Optional
+    country: Country  # Optional
 ```
 
 #### Installation
