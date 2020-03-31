@@ -23,7 +23,7 @@ data:
     longitude: 11.559107
     street: Street name  # Optional
     city: City name  # Optional
-    postalCode: Some postal code  # Optional
+    postal_code: Postal Code  # Optional
     country: Country  # Optional
 ```
 
