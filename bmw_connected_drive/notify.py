@@ -29,11 +29,11 @@ class BMWNotificationService(BaseNotificationService):
     def __init__(self, vehicle):
         """Set up the notification service."""
         self._vehicle = vehicle
-        self.targets = {vehicle.name: vehicle}
+        self.targets = {self._vehicle.name: self._vehicle}
 
     def send_message(self, message="", **kwargs):
         """Send the message to the car."""
-        _LOGGER.error("Sending message to %s", self.targets)
+        _LOGGER.error("Sending message to %s", self._vehicle.name)
         #TODO the above logger is set to error to see the message in the log easily -> change to debug
 
         # Extract params from data dict
