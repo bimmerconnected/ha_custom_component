@@ -7,13 +7,14 @@ With this version you can use the following new options using the new notify com
 * Send Point of Interest (POI) to your car
 
 You can test this by using Developer Tools - Services and select `notify.bmw_connected_drive_<car>`
-and for a message use these service data:
+
+For a message use these service data:
 ```
 title: Your title here (if left empty it will be Home Assistant)
 message: Your message here
 ```
 
-for a POI:
+For a POI:
 ```
 title: Send location
 message: POI
