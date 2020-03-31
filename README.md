@@ -2,7 +2,7 @@
 Home Assistant Custom Component of BMW Connected Drive
 
 ### This is for testing purposes only
-With this version you can use the following new options:
+With this version you can use the following new options using the new notify component:
 * Send notifications to your car
 * Send Point of Interest (POI) to your car
 
