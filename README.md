@@ -16,13 +16,11 @@ message: Your message here
 
 For a POI:
 ```
-title: Send location
-message: POI
+message: The name of the location (this is shown on the iDrive dashboard)
 data:
   location:
     latitude: 48.177024
     longitude: 11.559107
-    name: The name of the location
 ```
 
 #### Installation
