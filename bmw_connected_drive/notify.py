@@ -57,7 +57,7 @@ class BMWNotificationService(BaseNotificationService):
                 {
                     ATTR_LAT: data[ATTR_LOCATION].get(ATTR_LATITUDE),
                     ATTR_LON: data[ATTR_LOCATION].get(ATTR_LONGITUDE),
-                    ATTR_NAME: data[ATTR_LOCATION].get(ATTR_NAME),
+                    ATTR_NAME: message,
                 }
             )
         else:
