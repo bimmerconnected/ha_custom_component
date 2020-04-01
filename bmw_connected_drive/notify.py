@@ -8,12 +8,7 @@ from homeassistant.components.notify import (
     ATTR_TITLE_DEFAULT,
     BaseNotificationService,
 )
-from homeassistant.const import (
-    ATTR_LATITUDE,
-    ATTR_LOCATION,
-    ATTR_LONGITUDE,
-    ATTR_NAME,
-)
+from homeassistant.const import ATTR_LATITUDE, ATTR_LOCATION, ATTR_LONGITUDE, ATTR_NAME
 
 from . import DOMAIN as BMW_DOMAIN
 
@@ -44,7 +39,6 @@ class BMWNotificationService(BaseNotificationService):
 
     def send_message(self, message="", **kwargs):
         """Send a message or POI to the car."""
-
         for _vehicle in kwargs[ATTR_TARGET]:
             _LOGGER.debug("Sending message to %s", _vehicle.name)
 
@@ -71,5 +65,5 @@ class BMWNotificationService(BaseNotificationService):
                 _vehicle.remote_services.trigger_send_poi(location_dict)
             else:
                 _vehicle.remote_services.trigger_send_message(
-                    {ATTR_TEXT: message, ATTR_SUBJECT: title,}
+                    {ATTR_TEXT: message, ATTR_SUBJECT: title}
                 )
