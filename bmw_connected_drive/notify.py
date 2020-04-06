@@ -33,7 +33,7 @@ def get_service(hass, config, discovery_info=None):
 class BMWNotificationService(BaseNotificationService):
     """Send Notifications to BMW."""
 
-    def __init__(self, accounts):
+    def __init__(self):
         """Set up the notification service."""
         self.targets = {}
 
