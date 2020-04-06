@@ -25,7 +25,9 @@ def get_service(hass, config, discovery_info=None):
     """Get the BMW notification service."""
     accounts = hass.data[BMW_DOMAIN]
     _LOGGER.debug("Found BMW accounts: %s", ", ".join([a.name for a in accounts]))
-    return BMWNotificationService(accounts)
+    svc = BMWNotificationService()
+    svc.setup(accounts)
+    return svc
 
 
 class BMWNotificationService(BaseNotificationService):
@@ -34,6 +36,9 @@ class BMWNotificationService(BaseNotificationService):
     def __init__(self, accounts):
         """Set up the notification service."""
         self.targets = {}
+
+    def setup(self, accounts):
+        """Get the BMW vehicle(s) for the account(s)."""
         for account in accounts:
             self.targets.update({v.name: v for v in account.account.vehicles})
 
