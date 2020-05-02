@@ -1,5 +1,13 @@
-# HA Custom Component
-Home Assistant Custom Component of BMW Connected Drive
+# BMW Connected Drive Custom Component for Development
+Home Assistant Custom Component of BMW Connected Drive **for development purposes only**!
+For details please see [the official component documentation](https://www.home-assistant.io/integrations/bmw_connected_drive/) or [the bimmer_connected library](https://github.com/bimmerconnected/bimmer_connected).
+
+### Installation (HACS)
+When using HACS, just add this repository as a [custom repostiory](https://hacs.xyz/docs/navigation/settings#custom-repositories) of category `Integration`.
+
+### Installation (manual)
+Place the folder `bmw_connected_drive` and all it's files in the folder `custom_components` in the config folder of HA (where configuration.yaml is).
+
 
 ### This is for testing purposes only
 With this version you can use the following new options using the new notify component:
@@ -26,9 +34,6 @@ data:
     postal_code: Postal Code  # Optional
     country: Country  # Optional
 ```
-
-#### Installation
-Place the folder `bmw_connected_drive` and all it's files in the folder `custom_components` in the config folder of HA (where configuration.yaml is).
 
 #### Pictures
 Here are some pictures, not too sharp and yeah it's a touch screen, but they give a good impression
