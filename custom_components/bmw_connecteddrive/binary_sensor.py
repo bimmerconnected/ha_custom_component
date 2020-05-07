@@ -1,7 +1,7 @@
 """Reads vehicle status from BMW connected drive portal."""
 import logging
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import BinarySensorDevice as BinarySensorEntity
 from homeassistant.const import (
     ATTR_DEVICE_CLASS,
     ATTR_ICON,
