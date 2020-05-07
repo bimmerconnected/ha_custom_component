@@ -152,9 +152,8 @@ class BMWConnectedDriveVehicleEntity(Entity):
 
         self._id = bmw_entity_type[ATTR_ID]  # attribute
         self._unique_id = f"{vehicle.vin}-{self._id}"
-
-        self._name = f"{vehicle.name} {bmw_entity_type[ATTR_NAME].title()}"
-        self._unique_id = f"{vehicle.vin}-{self._id}"
+        self._name = f"{vehicle.name} {self._id}"
+        self._friendly_name = f"{vehicle.name} {bmw_entity_type[ATTR_NAME].title()}
         self._device_class = bmw_entity_type.get(ATTR_DEVICE_CLASS, None)
         self._icon = bmw_entity_type.get(ATTR_ICON, None)
         self._state = None

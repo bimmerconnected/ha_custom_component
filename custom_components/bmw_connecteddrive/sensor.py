@@ -141,8 +141,7 @@ class BMWConnectedDriveSensor(BMWConnectedDriveVehicleEntity, Entity):
         """Return the state attributes of the sensor."""
         return {"car": self.vehicle.name}
 
-    @property
-    def state(self):
+    def update(self):
         """Read new state data from the library."""
         _LOGGER.debug("Updating %s", self.vehicle.name)
         vehicle_state = self.vehicle.state
@@ -158,8 +157,6 @@ class BMWConnectedDriveSensor(BMWConnectedDriveVehicleEntity, Entity):
             self._state = round(value_converted)
         else:
             self._state = getattr(vehicle_state, self._id)
-
-        return self._state
 
     def update_callback(self):
         """Schedule a state update."""
