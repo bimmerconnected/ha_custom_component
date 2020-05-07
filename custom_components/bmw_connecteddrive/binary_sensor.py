@@ -160,3 +160,7 @@ class BMWConnectedDriveBinarySensor(BMWConnectedDriveVehicleEntity, BinarySensor
                 f"{service_type} distance"
             ] = f"{distance} {self.hass.config.units.length_unit}"
         return result
+
+    def update_callback(self):
+        """Schedule a state update."""
+        self.schedule_update_ha_state(True)

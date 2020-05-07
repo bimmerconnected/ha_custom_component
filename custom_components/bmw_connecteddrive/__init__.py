@@ -41,7 +41,7 @@ CONFIG = vol.Schema(
 )
 
 # PLATFORMS = ["binary_sensor", "device_tracker", "lock", "notify", "sensor"]
-PLATFORMS = ["binary_sensor", "lock"]
+PLATFORMS = ["binary_sensor", "lock", "sensor"]
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
