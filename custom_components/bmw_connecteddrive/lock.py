@@ -85,7 +85,8 @@ class BMWConnectedDriveLock(BMWConnectedDriveVehicleEntity, LockEntity):
         self.async_update_ha_state()
         self.vehicle.remote_services.trigger_remote_door_unlock()
 
-    def update(self):
+    @property
+    def state(self):
         """Update state of the lock."""
         _LOGGER.debug("%s: updating data for %s", self.vehicle.name, self.name)
         vehicle_state = self.vehicle.state
@@ -96,10 +97,12 @@ class BMWConnectedDriveLock(BMWConnectedDriveVehicleEntity, LockEntity):
             if vehicle_state.door_lock_state in [LockState.LOCKED, LockState.SECURED]
             else STATE_UNLOCKED
         )
+        
+        return self._state
 
-    def update_callback(self):
-        """Schedule a state update."""
-        self.schedule_update_ha_state(True)
+    # def update_callback(self):
+    #     """Schedule a state update."""
+    #     self.schedule_update_ha_state(True)
 
     # async def async_added_to_hass(self):
     #     """Add callback after being added to hass.

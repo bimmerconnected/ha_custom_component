@@ -1,6 +1,8 @@
 """Reads vehicle status from BMW connected drive portal."""
 import logging
 
+from bimmer_connected.state import ChargingState, LockState
+
 from homeassistant.components.binary_sensor import BinarySensorDevice as BinarySensorEntity
 from homeassistant.const import (
     ATTR_DEVICE_CLASS,
@@ -69,6 +71,20 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 class BMWConnectedDriveBinarySensor(BMWConnectedDriveVehicleEntity, BinarySensorEntity):
     """Representation of a BMW vehicle binary sensor."""
+
+    def __init__(
+        self,
+        coordinator: BMWConnectedDriveDataUpdateCoordinator,
+        vehicle: ConnectedDriveVehicle,
+        bmw_entity_type: dict,
+    ) -> None:
+        """Initialize the BMWConnectedDriveLock entity."""
+        self._name = f"{vehicle.name} {bmw_entity_type[ATTR_ID]}"
+        self._sensor_name = f"{vehicle.name} {bmw_entity_type[ATTR_NAME].title()}"
+
+        super().__init__(coordinator, vehicle, bmw_entity_type)
+
+
 
     @property
     def is_on(self):
