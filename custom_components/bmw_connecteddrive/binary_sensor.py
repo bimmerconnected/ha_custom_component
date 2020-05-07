@@ -113,8 +113,10 @@ class BMWConnectedDriveBinarySensor(BMWConnectedDriveVehicleEntity, BinarySensor
 
         return sorted(result.items())
 
-    def update(self):
-        """Read new state data from the library."""
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
         vehicle_state = self._vehicle.state
 
         # device class opening: On means open, Off means closed
@@ -145,6 +147,8 @@ class BMWConnectedDriveBinarySensor(BMWConnectedDriveVehicleEntity, BinarySensor
         #                    Off means device is unplugged
         if self._id == "connection_status":
             self._state = vehicle_state.connection_status == "CONNECTED"
+
+        return self._state
 
     def _format_cbs_report(self, report):
         result = {}
