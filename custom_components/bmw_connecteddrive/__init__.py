@@ -182,7 +182,7 @@ class BMWConnectedDriveVehicleEntity(Entity):
     @property
     def device_class(self):
         """Return the device class."""
-        return self._class
+        return self._device_class
 
     @property
     def state(self):
