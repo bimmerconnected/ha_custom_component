@@ -3,7 +3,9 @@ import logging
 
 from bimmer_connected.state import ChargingState, LockState
 
-from homeassistant.components.binary_sensor import BinarySensorDevice as BinarySensorEntity
+from homeassistant.components.binary_sensor import (
+    BinarySensorDevice as BinarySensorEntity,
+)
 from homeassistant.const import (
     ATTR_DEVICE_CLASS,
     ATTR_ICON,
@@ -117,7 +119,7 @@ class BMWConnectedDriveBinarySensor(BMWConnectedDriveVehicleEntity, BinarySensor
 
     def update(self):
         """Return the state of the sensor."""
-        vehicle_state = self._vehicle.state
+        vehicle_state = self.vehicle.state
 
         # device class opening: On means open, Off means closed
         if self._id == "lids":
@@ -166,3 +168,11 @@ class BMWConnectedDriveBinarySensor(BMWConnectedDriveVehicleEntity, BinarySensor
     def update_callback(self):
         """Schedule a state update."""
         self.schedule_update_ha_state(True)
+
+    async def async_added_to_hass(self):
+        """Connect to dispatcher listening for entity data notifications."""
+        self.async_on_remove(
+            self.coordinator.async_add_listener(
+                self.async_write_custom_ha_state(self.update)
+            )
+        )

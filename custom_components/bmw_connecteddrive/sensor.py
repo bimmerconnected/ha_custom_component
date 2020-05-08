@@ -63,7 +63,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         sensor_info = ATTR_TO_HA_METRIC
 
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
-    _LOGGER.info(
+    _LOGGER.debug(
         "%s %s: vehicles: %s",
         DOMAIN,
         "sensor",
@@ -73,9 +73,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     entities = []
 
     for vehicle in coordinator.account.vehicles:
-        _LOGGER.info("drive_train_attributes: %s", ", ".join(vehicle.drive_train_attributes))
         for attribute_name in vehicle.drive_train_attributes:
-            _LOGGER.info("available_attributes: %s", ", ".join(vehicle.available_attributes))
             if attribute_name in vehicle.available_attributes:
                 sensor = BMWConnectedDriveSensor(
                     coordinator,
@@ -88,7 +86,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                     },
                 )
                 entities.append(sensor)
-    _LOGGER.info("entities to be added: %d", len(entities))
     async_add_entities(entities, True)
 
     # for account in accounts:
@@ -112,7 +109,7 @@ class BMWConnectedDriveSensor(BMWConnectedDriveVehicleEntity, Entity):
         bmw_entity_type: dict,
     ) -> None:
         """Initialize the BMWConnectedDriveSensor entity."""
-        _LOGGER.info("Initializing BMWConnectedDriveSensor for %s", vehicle.name)
+        _LOGGER.debug("Initializing BMWConnectedDriveSensor for %s", vehicle.name)
         self._sensor_info = bmw_entity_type["sensor_info"]
 
         super().__init__(coordinator, vehicle, bmw_entity_type)
@@ -158,6 +155,10 @@ class BMWConnectedDriveSensor(BMWConnectedDriveVehicleEntity, Entity):
         else:
             self._state = getattr(vehicle_state, self._id)
 
-    def update_callback(self):
-        """Schedule a state update."""
-        self.schedule_update_ha_state(True)
+    async def async_added_to_hass(self):
+        """Connect to dispatcher listening for entity data notifications."""
+        self.async_on_remove(
+            self.coordinator.async_add_listener(
+                self.async_write_custom_ha_state(self.update)
+            )
+        )

@@ -3,6 +3,7 @@ import asyncio
 from datetime import timedelta
 import json
 import logging
+from typing import Callable, Any
 
 import async_timeout
 from bimmer_connected.account import ConnectedDriveAccount
@@ -10,6 +11,7 @@ from bimmer_connected.country_selector import get_region_from_name
 from bimmer_connected.vehicle import ConnectedDriveVehicle
 import voluptuous as vol
 
+from homeassistant.core import callback
 from homeassistant.components.lock import DOMAIN as LOCK
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -41,7 +43,7 @@ CONFIG = vol.Schema(
 )
 
 # PLATFORMS = ["binary_sensor", "device_tracker", "lock", "notify", "sensor"]
-PLATFORMS = ["binary_sensor", "lock", "sensor"]
+PLATFORMS = ["binary_sensor", "lock"]
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
@@ -202,12 +204,23 @@ class BMWConnectedDriveVehicleEntity(Entity):
         """Return a unique ID to use for this entity."""
         return self._unique_id
 
+    @callback
+    async def async_write_custom_ha_state(
+        self, target: Callable[..., Any] = None
+    ) -> None:
+        """Update the state using a function and write it to the state machine."""
+
+        if target:
+            await self.hass.async_add_executor_job(target)
+
+        self.async_write_ha_state()
+
     async def async_added_to_hass(self):
         """Connect to dispatcher listening for entity data notifications."""
         self.async_on_remove(
-            self.coordinator.async_add_listener(self.async_write_ha_state)
+            self.coordinator.async_add_listener(self.async_write_custom_ha_state)
         )
 
     async def async_update(self):
-        """Update Atag entity."""
+        """Update BMW ConnectedDrive entity entity."""
         await self.coordinator.async_request_refresh()
