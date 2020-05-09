@@ -1,6 +1,5 @@
-"""Constants for the BMW ConnectedDrive integration."""
-
-DOMAIN = "bmw_connecteddrive"
+"""Const file for the BMW Connected Drive integration."""
+ATTRIBUTION = "Data provided by BMW Connected Drive"
 
 CONF_REGION = "region"
 CONF_ALLOWED_REGIONS = ["china", "north_america", "rest_of_world"]

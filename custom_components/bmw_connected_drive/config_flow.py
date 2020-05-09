@@ -6,12 +6,11 @@ import voluptuous as vol
 from homeassistant import config_entries, core, exceptions
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 
-from . import BMWConnectedDriveDataUpdateCoordinator
-from .const import DOMAIN, CONF_ALLOWED_REGIONS, CONF_READ_ONLY, CONF_REGION
+from . import DOMAIN, setup_account
+from .const import CONF_ALLOWED_REGIONS, CONF_READ_ONLY, CONF_REGION
 
 _LOGGER = logging.getLogger(__name__)
 
-# TODO adjust the data schema to the data that you need
 DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_USERNAME): str,
@@ -27,13 +26,6 @@ async def validate_input(hass: core.HomeAssistant, data):
 
     Data has the keys from DATA_SCHEMA with values provided by the user.
     """
-    # TODO validate the data can be used to set up a connection.
-
-    # If your PyPI package is not built with async, pass your methods
-    # to the executor:
-    # await hass.async_add_executor_job(
-    #     your_validate_func, data["username"], data["password"]
-    # )
 
     entry = config_entries.ConfigEntry(
         version=1,
@@ -45,17 +37,13 @@ async def validate_input(hass: core.HomeAssistant, data):
         system_options={},
     )
 
-    hub = BMWConnectedDriveDataUpdateCoordinator(hass, entry)
-    _LOGGER.debug("Hub added")
-    if not await hub.async_connect(
-        data[CONF_USERNAME], data[CONF_PASSWORD], data[CONF_REGION]
-    ):
+    try:
+        account = await hass.async_add_executor_job(
+            setup_account, entry.data, hass, entry.data[CONF_USERNAME]
+        )
+        await hass.async_add_executor_job(account.update)
+    except Exception:
         raise InvalidAuth
-
-    # If you cannot connect:
-    # throw CannotConnect
-    # If the authentication is wrong:
-    # InvalidAuth
 
     # Return info that you want to store in the config entry.
     return {"title": data[CONF_USERNAME]}
@@ -69,6 +57,7 @@ class BMWConnectedDriveConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
+        _LOGGER.info(user_input)
         errors = {}
         if user_input is not None:
             unique_id = f"{user_input[CONF_REGION]}-{user_input[CONF_USERNAME]}"
@@ -84,13 +73,17 @@ class BMWConnectedDriveConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
             except (InvalidAuth, OSError):
                 errors["base"] = "invalid_auth"
-            # except Exception:  # pylint: disable=broad-except
-            #     _LOGGER.exception("Unexpected exception")
-            #     errors["base"] = "unknown"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected exception")
+                errors["base"] = "unknown"
 
         return self.async_show_form(
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
         )
+
+    async def async_step_import(self, user_input):
+        """Handle import."""
+        return await self.async_step_user(user_input)
 
 
 class CannotConnect(exceptions.HomeAssistantError):
