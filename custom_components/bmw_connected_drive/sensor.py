@@ -83,6 +83,17 @@ class BMWConnectedDriveSensor(Entity):
         self._attribute_info = attribute_info
 
     @property
+    def device_info(self) -> dict:
+        """Return info for device registry."""
+        return {
+            "identifiers": {(BMW_DOMAIN, self._vehicle.vin)},
+            "sw_version": self._vehicle.vin,
+            "name": f'{self._vehicle.attributes.get("brand")} {self._vehicle.name}',
+            "model": self._vehicle.name,
+            "manufacturer": self._vehicle.attributes.get("brand"),
+        }
+
+    @property
     def should_poll(self) -> bool:
         """Return False.
 
