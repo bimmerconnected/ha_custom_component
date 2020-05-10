@@ -2,7 +2,6 @@
 import asyncio
 from datetime import timedelta
 import logging
-import json
 
 import async_timeout
 from bimmer_connected.account import ConnectedDriveAccount
@@ -19,6 +18,8 @@ from homeassistant.helpers.event import track_utc_time_change
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 import homeassistant.util.dt as dt_util
 
+from .const import CONF_ALLOWED_REGIONS
+
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "bmw_connected_drive"
@@ -28,10 +29,10 @@ ATTR_VIN = "vin"
 
 ACCOUNT_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_USERNAME): cv.string,
-        vol.Required(CONF_PASSWORD): cv.string,
-        vol.Required(CONF_REGION): vol.Any("north_america", "china", "rest_of_world"),
-        vol.Optional(CONF_READ_ONLY, default=False): cv.boolean,
+        vol.Required(CONF_USERNAME): str,
+        vol.Required(CONF_PASSWORD): str,
+        vol.Required(CONF_REGION): vol.In(CONF_ALLOWED_REGIONS),
+        vol.Optional(CONF_READ_ONLY, default=False): bool,
     }
 )
 
@@ -122,15 +123,19 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         )
     )
 
-    services = list(_SERVICE_MAP) + [SERVICE_UPDATE_STATE]
-    unload_services = all(
-        await asyncio.gather(
-            *[
-                hass.async_add_executor_job(hass.services.remove, DOMAIN, service)
-                for service in services
-            ]
+    # Only remove services if it is the last account
+    if len(hass.data[DOMAIN]) == 1:
+        services = list(_SERVICE_MAP) + [SERVICE_UPDATE_STATE]
+        unload_services = all(
+            await asyncio.gather(
+                *[
+                    hass.async_add_executor_job(hass.services.remove, DOMAIN, service)
+                    for service in services
+                ]
+            )
         )
-    )
+    else:
+        unload_services = True
 
     if all([unload_ok, unload_services]):
         hass.data[DOMAIN].pop(entry.entry_id)
@@ -148,13 +153,11 @@ def setup_account(account_config: dict, hass, name: str) -> "BMWConnectedDriveAc
     cd_account = BMWConnectedDriveAccount(username, password, region, name, read_only)
 
     def execute_service(call):
-        """Execute a service for a vehicle.
-
-        This must be a member function as we need access to the cd_account
-        object here.
-        """
+        """Execute a service for a vehicle."""
         vin = call.data[ATTR_VIN]
-        vehicle = cd_account.account.get_vehicle(vin)
+        vehicle = None
+        for account in hass.data[DOMAIN]:
+            vehicle = account.get_vehicle(vin)
         if not vehicle:
             _LOGGER.error("Could not find a vehicle for VIN %s", vin)
             return

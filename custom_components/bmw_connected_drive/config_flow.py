@@ -1,24 +1,13 @@
 """Config flow for BMW ConnectedDrive integration."""
 import logging
 
-import voluptuous as vol
-
 from homeassistant import config_entries, core, exceptions
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from homeassistant.const import CONF_USERNAME
 
-from . import DOMAIN, setup_account
-from .const import CONF_ALLOWED_REGIONS, CONF_READ_ONLY, CONF_REGION
+from . import ACCOUNT_SCHEMA as DATA_SCHEMA, DOMAIN, setup_account
+from .const import CONF_REGION
 
 _LOGGER = logging.getLogger(__name__)
-
-DATA_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_USERNAME): str,
-        vol.Required(CONF_PASSWORD): str,
-        vol.Required(CONF_REGION): vol.In(CONF_ALLOWED_REGIONS),
-        vol.Optional(CONF_READ_ONLY, default=False): bool,
-    }
-)
 
 
 async def validate_input(hass: core.HomeAssistant, data):
@@ -57,7 +46,6 @@ class BMWConnectedDriveConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
-        _LOGGER.info(user_input)
         errors = {}
         if user_input is not None:
             unique_id = f"{user_input[CONF_REGION]}-{user_input[CONF_USERNAME]}"
