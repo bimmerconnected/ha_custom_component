@@ -2,7 +2,7 @@
 import logging
 
 from homeassistant import config_entries, core, exceptions
-from homeassistant.const import CONF_USERNAME
+from homeassistant.const import CONF_USERNAME, CONF_SOURCE
 
 from . import ACCOUNT_SCHEMA as DATA_SCHEMA, DOMAIN, setup_account
 from .const import CONF_REGION
@@ -35,7 +35,7 @@ async def validate_input(hass: core.HomeAssistant, data):
         raise InvalidAuth
 
     # Return info that you want to store in the config entry.
-    return {"title": data[CONF_USERNAME]}
+    return {"title": f"{data[CONF_USERNAME]}{data.get(CONF_SOURCE, '')}"}
 
 
 class BMWConnectedDriveConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -71,6 +71,7 @@ class BMWConnectedDriveConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_import(self, user_input):
         """Handle import."""
+        user_input[CONF_SOURCE] = " (configuration.yaml)"
         return await self.async_step_user(user_input)
 
 

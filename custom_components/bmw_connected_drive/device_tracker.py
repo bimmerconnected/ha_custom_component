@@ -97,6 +97,10 @@ class BMWDeviceTracker(TrackerEntity):
     def icon(self):
         return "mdi:car"
 
+    def update(self):
+        """Update state of the decvice tracker."""
+        self._location = self._vehicle.state.gps_position
+
     def update_callback(self):
         """Schedule a state update."""
         self.schedule_update_ha_state(True)
