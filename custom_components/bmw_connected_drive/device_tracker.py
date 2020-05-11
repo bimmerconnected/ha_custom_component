@@ -23,28 +23,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             )
     async_add_entities(devices, True)
 
-    #    if not self.vehicle.state.is_vehicle_tracking_enabled:
-    #         _LOGGER.debug("Tracking is disabled for vehicle %s", dev_id)
-    #         return
-
-    # # if not account.read_only:
-    # for vehicle in account.account.vehicles:
-    #     device = BMWLock(account, vehicle, "lock", "BMW lock")
-    #     devices.append(device)
-    # async_add_entities(devices, True)
-
-
-# def setup_scanner(hass, config, see, discovery_info=None):
-#     """Set up the BMW tracker."""
-#     accounts = hass.data[BMW_DOMAIN]
-#     _LOGGER.debug("Found BMW accounts: %s", ", ".join([a.name for a in accounts]))
-#     for account in accounts:
-#         for vehicle in account.account.vehicles:
-#             tracker = BMWDeviceTracker(see, vehicle)
-#             account.add_update_listener(tracker.update)
-#             tracker.update()
-#     return True
-
 
 class BMWDeviceTracker(TrackerEntity):
     """BMW Connected Drive device tracker."""
@@ -95,6 +73,7 @@ class BMWDeviceTracker(TrackerEntity):
 
     @property
     def icon(self):
+        """Return the icon to use in the frontend, if any."""
         return "mdi:car"
 
     def update(self):

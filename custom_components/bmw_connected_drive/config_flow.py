@@ -1,13 +1,25 @@
 """Config flow for BMW ConnectedDrive integration."""
 import logging
 
-from homeassistant import config_entries, core, exceptions
-from homeassistant.const import CONF_USERNAME, CONF_SOURCE
+import voluptuous as vol
 
-from . import ACCOUNT_SCHEMA as DATA_SCHEMA, DOMAIN, setup_account
-from .const import CONF_REGION
+from homeassistant import config_entries, core, exceptions
+from homeassistant.const import CONF_PASSWORD, CONF_SOURCE, CONF_USERNAME
+
+from . import DOMAIN, setup_account
+from .const import CONF_ALLOWED_REGIONS, CONF_READ_ONLY, CONF_REGION
 
 _LOGGER = logging.getLogger(__name__)
+
+
+DATA_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_USERNAME): str,
+        vol.Required(CONF_PASSWORD): str,
+        vol.Required(CONF_REGION): vol.In(CONF_ALLOWED_REGIONS),
+        vol.Optional(CONF_READ_ONLY, default=False): bool,
+    }
+)
 
 
 async def validate_input(hass: core.HomeAssistant, data):

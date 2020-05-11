@@ -1,21 +1,18 @@
 """Reads vehicle status from BMW connected drive portal."""
 import asyncio
-from datetime import timedelta
 import logging
 
-import async_timeout
 from bimmer_connected.account import ConnectedDriveAccount
 from bimmer_connected.country_selector import get_region_from_name
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
-from homeassistant.core import HomeAssistant, ServiceRegistry
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import discovery
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import track_utc_time_change
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 import homeassistant.util.dt as dt_util
 
 from .const import CONF_ALLOWED_REGIONS
@@ -29,10 +26,10 @@ ATTR_VIN = "vin"
 
 ACCOUNT_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_USERNAME): str,
-        vol.Required(CONF_PASSWORD): str,
+        vol.Required(CONF_USERNAME): cv.string,
+        vol.Required(CONF_PASSWORD): cv.string,
         vol.Required(CONF_REGION): vol.In(CONF_ALLOWED_REGIONS),
-        vol.Optional(CONF_READ_ONLY, default=False): bool,
+        vol.Optional(CONF_READ_ONLY, default=False): cv.boolean,
     }
 )
 
@@ -156,7 +153,9 @@ def setup_account(account_config: dict, hass, name: str) -> "BMWConnectedDriveAc
         """Execute a service for a vehicle."""
         vin = call.data[ATTR_VIN]
         vehicle = None
-        for account in hass.data[DOMAIN]:
+        for account in [
+            account for account in hass.data[DOMAIN] if not account.read_only
+        ]:
             vehicle = account.get_vehicle(vin)
         if not vehicle:
             _LOGGER.error("Could not find a vehicle for VIN %s", vin)
