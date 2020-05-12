@@ -43,8 +43,10 @@ async def validate_input(hass: core.HomeAssistant, data):
             setup_account, entry.data, hass, entry.data[CONF_USERNAME]
         )
         await hass.async_add_executor_job(account.update)
-    except Exception:
+    except OSError:
         raise InvalidAuth
+    except Exception:
+        raise CannotConnect
 
     # Return info that you want to store in the config entry.
     return {"title": f"{data[CONF_USERNAME]}{data.get(CONF_SOURCE, '')}"}
@@ -67,11 +69,13 @@ class BMWConnectedDriveConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             try:
                 info = await validate_input(self.hass, user_input)
+                if self.context[CONF_SOURCE] == config_entries.SOURCE_IMPORT:
+                    info["title"] = f"{info['title']} (configuration.yaml)"
 
                 return self.async_create_entry(title=info["title"], data=user_input)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
-            except (InvalidAuth, OSError):
+            except InvalidAuth:
                 errors["base"] = "invalid_auth"
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
@@ -83,7 +87,6 @@ class BMWConnectedDriveConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_import(self, user_input):
         """Handle import."""
-        user_input[CONF_SOURCE] = " (configuration.yaml)"
         return await self.async_step_user(user_input)
 
 

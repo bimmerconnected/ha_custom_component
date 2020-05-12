@@ -93,9 +93,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     await _async_update_all()
 
-    # for component in BMW_COMPONENTS:
-    #     await discovery.async_load_platform(hass, component, DOMAIN, {}, entry.data)
-
     for platform in BMW_COMPONENTS:
         if platform != "notify":
             hass.async_create_task(
@@ -153,6 +150,7 @@ def setup_account(account_config: dict, hass, name: str) -> "BMWConnectedDriveAc
         """Execute a service for a vehicle."""
         vin = call.data[ATTR_VIN]
         vehicle = None
+        # Double check for read_only accounts as another account could create the services
         for account in [
             account for account in hass.data[DOMAIN] if not account.read_only
         ]:
