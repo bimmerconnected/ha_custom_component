@@ -175,6 +175,7 @@ def setup_account(entry: ConfigEntry, hass, name: str) -> "BMWConnectedDriveAcco
     use_location = entry.options[CONF_USE_LOCATION]
 
     _LOGGER.debug("Adding new account %s", name)
+
     pos = (
         (hass.config.latitude, hass.config.longitude) if use_location else (None, None)
     )

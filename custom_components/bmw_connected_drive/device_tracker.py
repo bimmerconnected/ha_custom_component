@@ -77,15 +77,15 @@ class BMWDeviceTracker(TrackerEntity):
         return "mdi:car"
 
     @property
-    def should_poll(self):
-        """We're polling here."""
-        return True
+    def force_update(self):
+        """All updates do not need to be written to the state machine."""
+        return False
 
     def update(self):
         """Update state of the decvice tracker."""
         self._location = (
             self._vehicle.state.gps_position
-            if self._vehicle.state.gps_position
+            if self._vehicle.state.is_vehicle_tracking_enabled
             else (None, None)
         )
 
