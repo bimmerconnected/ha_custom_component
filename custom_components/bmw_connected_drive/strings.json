@@ -20,5 +20,16 @@
     "abort": {
       "already_configured": "Device is already configured"
     }
+  },
+  "options": {
+    "step": {
+      "account_options": {
+        "title": "BMW ConnectedDrive settings",
+        "data": {
+          "read_only": "Read-only",
+          "use_location": "Use Home Assistant location for car location polls"
+        }
+      }
+    }
   }
 }

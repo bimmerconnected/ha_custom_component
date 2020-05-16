@@ -76,9 +76,18 @@ class BMWDeviceTracker(TrackerEntity):
         """Return the icon to use in the frontend, if any."""
         return "mdi:car"
 
+    @property
+    def should_poll(self):
+        """We're polling here."""
+        return True
+
     def update(self):
         """Update state of the decvice tracker."""
-        self._location = self._vehicle.state.gps_position
+        self._location = (
+            self._vehicle.state.gps_position
+            if self._vehicle.state.gps_position
+            else (None, None)
+        )
 
     def update_callback(self):
         """Schedule a state update."""

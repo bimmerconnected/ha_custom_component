@@ -20,5 +20,16 @@
             }
         }
     },
+    "options": {
+        "step": {
+            "account_options": {
+                "data": {
+                    "read_only": "Read-only",
+                    "use_location": "Use Home Assistant location for car location polls"
+                },
+                "title": "BMW ConnectedDrive settings"
+            }
+        }
+    },
     "title": "BMW ConnectedDrive"
 }
