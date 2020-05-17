@@ -29,6 +29,7 @@ ACCOUNT_SCHEMA = vol.Schema(
         vol.Required(CONF_USERNAME): cv.string,
         vol.Required(CONF_PASSWORD): cv.string,
         vol.Required(CONF_REGION): vol.In(CONF_ALLOWED_REGIONS),
+        vol.Optional(CONF_READ_ONLY): cv.boolean,
     }
 )
 
@@ -66,11 +67,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up BMW Connected Drive from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
+    # Convert data to dict to remove settings that are now stored as options
+    entry.data = dict(entry.data)
     default_options = {
-        CONF_READ_ONLY: entry.data.get(CONF_READ_ONLY, False),
+        CONF_READ_ONLY: entry.data.pop(CONF_READ_ONLY, False),
         CONF_USE_LOCATION: False,
     }
 
+    # Create options based on user input if no options are stored
     if list(entry.options) != list(default_options):
         default_options.update(entry.options)
         entry.options = default_options
@@ -86,7 +90,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     hass.data[DOMAIN][entry.entry_id] = account
 
-    async def _async_update_all():
+    async def _async_update_all(service_call=None):
         """Update all BMW accounts."""
         await hass.async_add_executor_job(_update_all)
 
@@ -97,9 +101,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         for cd_account in list(hass.data[DOMAIN].values()):
             cd_account.update()
 
+    # Add update listener for config entry changes (options)
     entry.add_update_listener(update_listener)
+
     # Service to manually trigger updates for all accounts.
-    hass.services.async_register(DOMAIN, SERVICE_UPDATE_STATE, _update_all)
+    hass.services.async_register(DOMAIN, SERVICE_UPDATE_STATE, _async_update_all)
 
     await _async_update_all()
 
@@ -128,8 +134,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         )
     )
 
-    # Only remove services if it is the last account
-    if len(hass.data[DOMAIN]) == 1:
+    # Only remove services if it is the last account and not read only
+    if len(hass.data[DOMAIN]) == 1 and not hass.data[DOMAIN][entry.entry_id].read_only:
         services = list(_SERVICE_MAP) + [SERVICE_UPDATE_STATE]
         unload_services = all(
             await asyncio.gather(
@@ -241,7 +247,7 @@ class BMWConnectedDriveAccount:
         self._update_listeners = []
 
         # Set observer position once for older cars to be in range for
-        # GPS position (pre-2014, <2km) and get new data from API
+        # GPS position (pre-7/2014, <2km) and get new data from API
         if lat and lon:
             self.account.set_observer_position(lat, lon)
             self.account.update_vehicle_states()
