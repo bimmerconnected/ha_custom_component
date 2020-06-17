@@ -10,3 +10,6 @@ Place the folder `bmw_connected_drive` and all it's files in the folder `custom_
 
 # Release notes
 See [Github Releases](https://github.com/bimmerconnected/ha_custom_component/releases/).
+
+# Version
+Version `20201706.2`
