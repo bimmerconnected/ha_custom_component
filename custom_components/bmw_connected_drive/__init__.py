@@ -39,7 +39,7 @@ CONFIG_SCHEMA = vol.Schema({DOMAIN: {cv.string: ACCOUNT_SCHEMA}}, extra=vol.ALLO
 SERVICE_SCHEMA = vol.Schema({vol.Required(ATTR_VIN): cv.string})
 
 
-BMW_COMPONENTS = ["binary_sensor", "device_tracker", "lock", "notify", "sensor"]
+BMW_PLATFORMS = ["binary_sensor", "device_tracker", "lock", "notify", "sensor"]
 UPDATE_INTERVAL = 5  # in minutes
 
 SERVICE_UPDATE_STATE = "update_state"
@@ -48,6 +48,7 @@ _SERVICE_MAP = {
     "light_flash": "trigger_remote_light_flash",
     "sound_horn": "trigger_remote_horn",
     "activate_air_conditioning": "trigger_remote_air_conditioning",
+    "find_vehicle": "trigger_remote_vehicle_finder",
 }
 
 
@@ -86,8 +87,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             setup_account, entry, hass, entry.data[CONF_USERNAME]
         )
         await hass.async_add_executor_job(account.update)
-    except Exception:
-        raise ConfigEntryNotReady
+    except Exception as ex:
+        raise ConfigEntryNotReady from ex
 
     hass.data[DOMAIN][entry.entry_id] = account
 
@@ -111,14 +112,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     await _async_update_all()
 
-    for platform in BMW_COMPONENTS:
-        if platform != "notify":
+    for platform in BMW_PLATFORMS:
+        if platform != NOTIFY_DOMAIN:
             hass.async_create_task(
                 hass.config_entries.async_forward_entry_setup(entry, platform)
             )
 
     hass.async_create_task(
-        discovery.async_load_platform(hass, "notify", DOMAIN, {}, entry.data)
+        discovery.async_load_platform(hass, NOTIFY_DOMAIN, DOMAIN, {}, entry.data)
     )
 
     return True
@@ -130,8 +131,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         await asyncio.gather(
             *[
                 hass.config_entries.async_forward_entry_unload(entry, component)
-                for component in BMW_COMPONENTS
-                if component != "notify"
+                for component in BMW_PLATFORMS
+                if component != NOTIFY_DOMAIN
             ]
         )
     )
@@ -151,7 +152,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         unload_services = True
 
     # Remove notify services
-    unload_notify = unload_services = all(
+    unload_notify = all(
         await asyncio.gather(
             *[
                 hass.async_add_executor_job(
@@ -188,7 +189,7 @@ def setup_account(entry: ConfigEntry, hass, name: str) -> "BMWConnectedDriveAcco
         (hass.config.latitude, hass.config.longitude) if use_location else (None, None)
     )
     cd_account = BMWConnectedDriveAccount(
-        username, password, region, name, read_only, pos[0], pos[1]
+        username, password, region, name, read_only, *pos
     )
 
     def execute_service(call):
@@ -196,9 +197,7 @@ def setup_account(entry: ConfigEntry, hass, name: str) -> "BMWConnectedDriveAcco
         vin = call.data[ATTR_VIN]
         vehicle = None
         # Double check for read_only accounts as another account could create the services
-        for account in [
-            account for account in hass.data[DOMAIN] if not account.read_only
-        ]:
+        for account in filter(lambda account: not account.read_only, hass.data[DOMAIN]):
             vehicle = account.get_vehicle(vin)
         if not vehicle:
             _LOGGER.error("Could not find a vehicle for VIN %s", vin)
@@ -271,7 +270,7 @@ class BMWConnectedDriveAccount:
         except OSError as exception:
             _LOGGER.error(
                 "Could not connect to the BMW Connected Drive portal. "
-                "The vehicle state could not be updated."
+                "The vehicle state could not be updated"
             )
             _LOGGER.exception(exception)
 

@@ -3,7 +3,7 @@ import logging
 
 from bimmer_connected.state import LockState
 
-from homeassistant.components.lock import LockDevice as LockEntity
+from homeassistant.components.lock import LockEntity
 from homeassistant.const import ATTR_ATTRIBUTION, STATE_LOCKED, STATE_UNLOCKED
 
 from . import DOMAIN as BMW_DOMAIN
