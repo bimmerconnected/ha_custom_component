@@ -197,7 +197,9 @@ def setup_account(entry: ConfigEntry, hass, name: str) -> "BMWConnectedDriveAcco
         vin = call.data[ATTR_VIN]
         vehicle = None
         # Double check for read_only accounts as another account could create the services
-        for account in filter(lambda account: not account.read_only, hass.data[DOMAIN]):
+        for account in [
+            account for account in hass.data[DOMAIN] if not account.read_only
+        ]:
             vehicle = account.get_vehicle(vin)
         if not vehicle:
             _LOGGER.error("Could not find a vehicle for VIN %s", vin)
