@@ -73,7 +73,7 @@ class BMWLock(LockEntity):
     @property
     def device_state_attributes(self):
         """Return the state attributes of the lock."""
-        vehicle_state = self._vehicle.state
+        vehicle_state = self._vehicle.state.vehicle_status
         result = {
             "car": self._vehicle.name,
             ATTR_ATTRIBUTION: ATTRIBUTION,
@@ -109,7 +109,7 @@ class BMWLock(LockEntity):
     def update(self):
         """Update state of the lock."""
         _LOGGER.debug("%s: updating data for %s", self._vehicle.name, self._attribute)
-        vehicle_state = self._vehicle.state
+        vehicle_state = self._vehicle.state.vehicle_status
 
         # Possible values: LOCKED, SECURED, SELECTIVE_LOCKED, UNLOCKED
         self._state = (

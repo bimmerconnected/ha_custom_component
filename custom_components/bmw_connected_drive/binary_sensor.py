@@ -130,7 +130,7 @@ class BMWConnectedDriveSensor(BinarySensorEntity):
     @property
     def device_state_attributes(self):
         """Return the state attributes of the binary sensor."""
-        vehicle_state = self._vehicle.state
+        vehicle_state = self._vehicle.state.vehicle_status
         result = {
             "car": self._vehicle.name,
             ATTR_ATTRIBUTION: ATTRIBUTION,
@@ -170,7 +170,7 @@ class BMWConnectedDriveSensor(BinarySensorEntity):
 
     def update(self):
         """Read new state data from the library."""
-        vehicle_state = self._vehicle.state
+        vehicle_state = self._vehicle.state.vehicle_status
 
         # device class opening: On means open, Off means closed
         if self._attribute == "lids":
