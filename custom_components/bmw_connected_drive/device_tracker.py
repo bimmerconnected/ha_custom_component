@@ -36,8 +36,7 @@ class BMWDeviceTracker(TrackerEntity):
             vehicle.state.vehicle_status.gps_position if vehicle.state.vehicle_status.gps_position else (None, None)
         )
         self._name = vehicle.name
-#        self._heading = vehicle.state.vehicle_status.gps_heading #TODO: Availble in bimmmer_connected >> 0.7.11
-        self._heading = None
+        self._heading = vehicle.state.vehicle_status.gps_heading
         self._vin = vehicle.vin
 
     @property
