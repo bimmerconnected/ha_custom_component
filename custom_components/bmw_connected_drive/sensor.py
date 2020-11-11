@@ -21,7 +21,13 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.icon import icon_for_battery_level
 
 from . import DOMAIN as BMW_DOMAIN
-from .const import ATTRIBUTION
+from .const import (
+    ATTRIBUTION,
+    CONF_LAST_TRIP,
+    CONF_ALL_TRIPS,
+    CONF_CHARGING_PROFILE,
+    CONF_DESTINATIONS,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -87,16 +93,7 @@ ATTR_TO_HA = {
     "timer3": ["mdi:av-timer", None],
     "overrideTimer": ["mdi:av-timer", None],
     # Destination attributes
-    "Destination_0": ["mdi:pin-outline", None],
-    "Destination_1": ["mdi:pin-outline", None],
-    "Destination_2": ["mdi:pin-outline", None],
-    "Destination_3": ["mdi:pin-outline", None],
-    "Destination_4": ["mdi:pin-outline", None],
-    "Destination_5": ["mdi:pin-outline", None],
-    "Destination_6": ["mdi:pin-outline", None],
-    "Destination_7": ["mdi:pin-outline", None],
-    "Destination_8": ["mdi:pin-outline", None],
-    "Destination_9": ["mdi:pin-outline", None],
+    "Destination_xx": ["mdi:pin-outline", None],
 }
 
 ATTR_TO_HA_METRIC.update(ATTR_TO_HA)
@@ -122,15 +119,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                 devices.append(device)
         for service in vehicle.state.attributes:
             # Add sensors for LastTrip, AllTrips & ChargingProfile
-            if service in ('LAST_TRIP', 'ALL_TRIPS', 'CHARGING_PROFILE'):
+            if service in (CONF_LAST_TRIP, CONF_ALL_TRIPS, CONF_CHARGING_PROFILE):
                 for attribute_name in vehicle.state.attributes[service]:
                     device = BMWConnectedDriveSensor(
                         account, vehicle, attribute_name, attribute_info, service
                     )
                     devices.append(device)
             # Add sensors for Destinations
-            if service == "DESTINATIONS":
-                dest_nr = 0
+            if service == CONF_DESTINATIONS:
+                dest_nr = 1
                 for destination in vehicle.state.attributes[service]:
                     attribute_name = f"Destination_{dest_nr}"
                     device = BMWConnectedDriveSensor(
@@ -191,14 +188,17 @@ class BMWConnectedDriveSensor(Entity):
     @property
     def icon(self):
         """Icon to use in the frontend, if any."""
-        vehicle_state = self._vehicle.state.vehicle_status
-        charging_state = vehicle_state.charging_status in [ChargingState.CHARGING]
 
         if self._attribute == "charging_level_hv":
+            vehicle_state = self._vehicle.state.vehicle_status
+            charging_state = vehicle_state.charging_status in [ChargingState.CHARGING]
             return icon_for_battery_level(
                 battery_level=vehicle_state.charging_level_hv, charging=charging_state
             )
-        icon, _ = self._attribute_info.get(self._attribute, [None, None])
+        elif "Destination_" in self._attribute:
+            icon, _ = self._attribute_info.get("Destination_xx", [None, None])
+        else:
+            icon, _ = self._attribute_info.get(self._attribute, [None, None])
         return icon
 
     @property
@@ -226,22 +226,22 @@ class BMWConnectedDriveSensor(Entity):
             "car": self._vehicle.name,
             ATTR_ATTRIBUTION: ATTRIBUTION,
         }
-        if self._service == "ALL_TRIPS":
+        if self._service == CONF_ALL_TRIPS:
             if self._attribute in ("avgCombinedConsumption", "avgElectricConsumption",
                 "avgRecuperation", "chargecycleRange", "totalElectricDistance"):
                 items = getattr(vehicle_all_trips, self._attribute)
                 for item in items:
                     result[item] = items[item]
-        elif self._service == "CHARGING_PROFILE":
+        elif self._service == CONF_CHARGING_PROFILE:
             if self._attribute in ("preferredChargingWindow", "timer1", "timer2",
                 "timer3", "overrideTimer"):
                 items = getattr(vehicle_charging_profile, self._attribute)
                 for item in items:
                     result[item] = items[item]
-        elif self._service == "DESTINATIONS":
+        elif self._service == CONF_DESTINATIONS:
             destinations =  vehicle_last_destinations.attributes
             _, dest_nr = self._attribute.split('_')
-            dest = destinations[int(dest_nr)]
+            dest = destinations[int(dest_nr) - 1]
             for item in dest:
                 result[item] = dest[item]
         return sorted(result.items())
@@ -266,9 +266,9 @@ class BMWConnectedDriveSensor(Entity):
             self._state = round(value_converted)
         elif self._service is None:
             self._state = getattr(vehicle_state, self._attribute)
-        elif self._service == "LAST_TRIP":
+        elif self._service == CONF_LAST_TRIP:
             self._state = getattr(vehicle_last_trip, self._attribute)
-        elif self._service == "ALL_TRIPS":
+        elif self._service == CONF_ALL_TRIPS:
             attr = getattr(vehicle_all_trips, self._attribute)
             if self._attribute in ("avgCombinedConsumption", "avgElectricConsumption",
                 "avgRecuperation", "chargecycleRange"):
@@ -277,7 +277,7 @@ class BMWConnectedDriveSensor(Entity):
                 self._state = attr['userTotal']
             else:
                 self._state = attr
-        elif self._service == "CHARGING_PROFILE":
+        elif self._service == CONF_CHARGING_PROFILE:
             attr = getattr(vehicle_charging_profile, self._attribute)
             if self._attribute == "preferredChargingWindow":
                 self._state = f"{attr['startTime']}-{attr['endTime']}"
@@ -285,10 +285,10 @@ class BMWConnectedDriveSensor(Entity):
                 self._state = attr['timerEnabled']
             else:
                 self._state = attr
-        elif self._service == "DESTINATIONS":
+        elif self._service == CONF_DESTINATIONS:
             _, dest_nr = self._attribute.split('_')
             destinations =  vehicle_last_destinations.attributes
-            dest = destinations[int(dest_nr)]
+            dest = destinations[int(dest_nr) - 1]
             self._state = dest['city']
 
     def update_callback(self):
