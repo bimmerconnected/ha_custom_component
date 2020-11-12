@@ -54,7 +54,6 @@ class BMWDeviceTracker(TrackerEntity):
         """Return the device state attributes."""
         attr = {}
         attr.update(super().state_attributes)
-        attr['vin'] = self._vin
         attr['heading'] = self._heading
         return attr
 

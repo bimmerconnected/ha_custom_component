@@ -23,10 +23,10 @@ from homeassistant.helpers.icon import icon_for_battery_level
 from . import DOMAIN as BMW_DOMAIN
 from .const import (
     ATTRIBUTION,
-    CONF_LAST_TRIP,
-    CONF_ALL_TRIPS,
-    CONF_CHARGING_PROFILE,
-    CONF_DESTINATIONS,
+    LAST_TRIP,
+    ALL_TRIPS,
+    CHARGING_PROFILE,
+    DESTINATIONS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -39,16 +39,16 @@ ATTR_TO_HA_METRIC = {
     "max_range_electric": ["mdi:map-marker-distance", LENGTH_KILOMETERS],
     "remaining_fuel": ["mdi:gas-station", VOLUME_LITERS],
     # LastTrip attributes
-    "avgCombinedConsumption": ["mdi:flash", f"{ENERGY_KILO_WATT_HOUR}/100{LENGTH_KILOMETERS}"],
-    "avgElectricConsumption": ["mdi:power-plug-outline", f"{ENERGY_KILO_WATT_HOUR}/100{LENGTH_KILOMETERS}"],
-    "avgRecuperation": ["mdi:recycle-variant", f"{ENERGY_KILO_WATT_HOUR}/100{LENGTH_KILOMETERS}"],
-    "electricDistance": ["mdi:map-marker-distance", LENGTH_KILOMETERS],
-    "savedFuel": ["mdi:fuel", VOLUME_LITERS],
-    "totalDistance": ["mdi:map-marker-distance", LENGTH_KILOMETERS],
+    "average_combined_consumption": ["mdi:flash", f"{ENERGY_KILO_WATT_HOUR}/100{LENGTH_KILOMETERS}"],
+    "average_electric_consumption": ["mdi:power-plug-outline", f"{ENERGY_KILO_WATT_HOUR}/100{LENGTH_KILOMETERS}"],
+    "average_recuperation": ["mdi:recycle-variant", f"{ENERGY_KILO_WATT_HOUR}/100{LENGTH_KILOMETERS}"],
+    "electric_distance": ["mdi:map-marker-distance", LENGTH_KILOMETERS],
+    "saved_fuel": ["mdi:fuel", VOLUME_LITERS],
+    "total_distance": ["mdi:map-marker-distance", LENGTH_KILOMETERS],
     # AllTrips attributes
-    "chargecycleRange": ["mdi:map-marker-distance", LENGTH_KILOMETERS],
-    "totalElectricDistance": ["mdi:map-marker-distance", LENGTH_KILOMETERS],
-    "totalSavedFuel": ["mdi:fuel", VOLUME_LITERS],
+    "chargecycle_range": ["mdi:map-marker-distance", LENGTH_KILOMETERS],
+    "total_electric_distance": ["mdi:map-marker-distance", LENGTH_KILOMETERS],
+    "total_saved_fuel": ["mdi:fuel", VOLUME_LITERS],
 }
 
 ATTR_TO_HA_IMPERIAL = {
@@ -59,16 +59,16 @@ ATTR_TO_HA_IMPERIAL = {
     "max_range_electric": ["mdi:map-marker-distance", LENGTH_MILES],
     "remaining_fuel": ["mdi:gas-station", VOLUME_GALLONS],
     # LastTrip attributes
-    "avgCombinedConsumption": ["mdi:flash", f"{ENERGY_KILO_WATT_HOUR}/100{LENGTH_MILES}"],
-    "avgElectricConsumption": ["mdi:power-plug-outline", f"{ENERGY_KILO_WATT_HOUR}/100{LENGTH_MILES}"],
-    "avgRecuperation": ["mdi:recycle-variant", f"{ENERGY_KILO_WATT_HOUR}/100{LENGTH_MILES}"],
-    "electricDistance": ["mdi:map-marker-distance", LENGTH_MILES],
-    "savedFuel": ["mdi:fuel", VOLUME_GALLONS],
-    "totalDistance": ["mdi:map-marker-distance", LENGTH_MILES],
+    "average_combined_consumption": ["mdi:flash", f"{ENERGY_KILO_WATT_HOUR}/100{LENGTH_MILES}"],
+    "average_electric_consumption": ["mdi:power-plug-outline", f"{ENERGY_KILO_WATT_HOUR}/100{LENGTH_MILES}"],
+    "average_recuperation": ["mdi:recycle-variant", f"{ENERGY_KILO_WATT_HOUR}/100{LENGTH_MILES}"],
+    "electric_distance": ["mdi:map-marker-distance", LENGTH_MILES],
+    "saved_fuel": ["mdi:fuel", VOLUME_GALLONS],
+    "total_distance": ["mdi:map-marker-distance", LENGTH_MILES],
     # AllTrips attributes
-    "chargecycleRange": ["mdi:map-marker-distance", LENGTH_MILES],
-    "totalElectricDistance": ["mdi:map-marker-distance", LENGTH_MILES],
-    "totalSavedFuel": ["mdi:fuel", VOLUME_GALLONS],
+    "chargecycle_range": ["mdi:map-marker-distance", LENGTH_MILES],
+    "total_electric_distance": ["mdi:map-marker-distance", LENGTH_MILES],
+    "total_saved_fuel": ["mdi:fuel", VOLUME_GALLONS],
 }
 
 ATTR_TO_HA = {
@@ -79,21 +79,65 @@ ATTR_TO_HA = {
     # LastTrip attributes
     "date": ["mdi:calendar-blank", None],
     "duration": ["mdi:timer-outline", TIME_MINUTES],
-    "electricDistanceRatio": ["mdi:percent-outline", PERCENTAGE],
+    "electric_distance_ratio": ["mdi:percent-outline", PERCENTAGE],
     # AllTrips attributes
-    "batterySizeMax": ["mdi:battery-charging-high", ENERGY_WATT_HOUR],
-    "resetDate": ["mdi:calendar-blank", None],
-    "savedCO2": ["mdi:tree-outline", MASS_KILOGRAMS],
-    "savedCO2greenEnergy": ["mdi:tree-outline", MASS_KILOGRAMS],
+    "battery_size_max": ["mdi:battery-charging-high", ENERGY_WATT_HOUR],
+    "reset_date": ["mdi:calendar-blank", None],
+    "saved_co2": ["mdi:tree-outline", MASS_KILOGRAMS],
+    "saved_co2_green_energy": ["mdi:tree-outline", MASS_KILOGRAMS],
     # ChargingProfile attributes
-    "climatizationEnabled": ["mdi:snowflake", None],
-    "preferredChargingWindow": ["mdi:dock-window", None],
-    "timer1": ["mdi:av-timer", None],
-    "timer2": ["mdi:av-timer", None],
-    "timer3": ["mdi:av-timer", None],
-    "overrideTimer": ["mdi:av-timer", None],
+    "is_pre_entry_climatization_enabled": ["mdi:snowflake", None],
+    "preferred_charging_window": ["mdi:dock-window", None],
+    "pre_entry_climatization_timer": ["mdi:av-timer", None],
     # Destination attributes
-    "Destination_xx": ["mdi:pin-outline", None],
+    "last_destinations": ["mdi:pin-outline", None],
+}
+
+# Available attributes in Bimmer Connected for Last Trip service
+ATTR_LAST_TRIP = {
+    "acceleration_value",
+    "anticipation_value",
+    "auxiliary_consumption_value",
+    "average_combined_consumption",
+    "average_electric_consumption",
+    "average_recuperation",
+    "date",
+    "driving_mode_value",
+    "duration",
+    "efficiency_value",
+    "electric_distance",
+    "electric_distance_ratio",
+    "saved_fuel",
+    "total_consumption_value",
+    "total_distance",
+}
+
+# Available attributes in Bimmer Connected for All Trips service
+ATTR_ALL_TRIPS = {
+    "average_combined_consumption",
+    "average_electric_consumption",
+    "average_recuperation",
+    "battery_size_max",
+    "chargecycle_range",
+    "reset_date",
+    "saved_co2",
+    "saved_co2_green_energy",
+    "total_electric_distance",
+    "total_saved_fuel",
+}
+
+# Available attributes for in Bimmer Connected Charging Profile service
+ATTR_CHARGING_PROFILE = {
+    "is_pre_entry_climatization_enabled",
+    "pre_entry_climatization_timer",
+    "preferred_charging_window",
+    "charging_preferences",
+    "charging_mode",
+}
+
+# Available attributes for in Bimmer Connected Destinations service
+ATTR_DESTINATIONS = {
+    "last_destinations",
 }
 
 ATTR_TO_HA_METRIC.update(ATTR_TO_HA)
@@ -117,24 +161,35 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                     account, vehicle, attribute_name, attribute_info
                 )
                 devices.append(device)
-        for service in vehicle.state.attributes:
-            # Add sensors for LastTrip, AllTrips & ChargingProfile
-            if service in (CONF_LAST_TRIP, CONF_ALL_TRIPS, CONF_CHARGING_PROFILE):
-                for attribute_name in vehicle.state.attributes[service]:
-                    device = BMWConnectedDriveSensor(
-                        account, vehicle, attribute_name, attribute_info, service
+        # LastTrip
+        if vehicle.has_statistics_service:
+            for attribute_name in ATTR_LAST_TRIP:
+                device = BMWConnectedDriveSensor(
+                    account, vehicle, attribute_name, attribute_info, LAST_TRIP
                     )
-                    devices.append(device)
-            # Add sensors for Destinations
-            if service == CONF_DESTINATIONS:
-                dest_nr = 1
-                for destination in vehicle.state.attributes[service]:
-                    attribute_name = f"Destination_{dest_nr}"
-                    device = BMWConnectedDriveSensor(
-                        account, vehicle, attribute_name, attribute_info, service
+                devices.append(device)
+        # AllTrips
+        if vehicle.has_statistics_service:
+            for attribute_name in ATTR_ALL_TRIPS:
+                device = BMWConnectedDriveSensor(
+                    account, vehicle, attribute_name, attribute_info, ALL_TRIPS
                     )
-                    devices.append(device)
-                    dest_nr += 1
+                devices.append(device)
+        # ChargingProfile
+        if vehicle.has_weekly_planner_service:
+            for attribute_name in ATTR_CHARGING_PROFILE:
+                device = BMWConnectedDriveSensor(
+                    account, vehicle, attribute_name, attribute_info, CHARGING_PROFILE
+                    )
+                devices.append(device)
+        # Destinations
+        if vehicle.has_destination_service:
+            for attribute_name in ATTR_DESTINATIONS:
+                device = BMWConnectedDriveSensor(
+                    account, vehicle, attribute_name, attribute_info, DESTINATIONS
+                )
+                devices.append(device)
+
     async_add_entities(devices, True)
 
 
@@ -188,15 +243,13 @@ class BMWConnectedDriveSensor(Entity):
     @property
     def icon(self):
         """Icon to use in the frontend, if any."""
+        vehicle_state = self._vehicle.state.vehicle_status
+        charging_state = vehicle_state.charging_status in [ChargingState.CHARGING]
 
         if self._attribute == "charging_level_hv":
-            vehicle_state = self._vehicle.state.vehicle_status
-            charging_state = vehicle_state.charging_status in [ChargingState.CHARGING]
             return icon_for_battery_level(
                 battery_level=vehicle_state.charging_level_hv, charging=charging_state
             )
-        elif "Destination_" in self._attribute:
-            icon, _ = self._attribute_info.get("Destination_xx", [None, None])
         else:
             icon, _ = self._attribute_info.get(self._attribute, [None, None])
         return icon
@@ -226,24 +279,43 @@ class BMWConnectedDriveSensor(Entity):
             "car": self._vehicle.name,
             ATTR_ATTRIBUTION: ATTRIBUTION,
         }
-        if self._service == CONF_ALL_TRIPS:
-            if self._attribute in ("avgCombinedConsumption", "avgElectricConsumption",
-                "avgRecuperation", "chargecycleRange", "totalElectricDistance"):
-                items = getattr(vehicle_all_trips, self._attribute)
-                for item in items:
-                    result[item] = items[item]
-        elif self._service == CONF_CHARGING_PROFILE:
-            if self._attribute in ("preferredChargingWindow", "timer1", "timer2",
-                "timer3", "overrideTimer"):
-                items = getattr(vehicle_charging_profile, self._attribute)
-                for item in items:
-                    result[item] = items[item]
-        elif self._service == CONF_DESTINATIONS:
-            destinations =  vehicle_last_destinations.attributes
-            _, dest_nr = self._attribute.split('_')
-            dest = destinations[int(dest_nr) - 1]
-            for item in dest:
-                result[item] = dest[item]
+        if self._service == ALL_TRIPS:
+            attr = getattr(vehicle_all_trips, self._attribute)
+            if self._attribute in ("average_combined_consumption", "average_electric_consumption",
+                "average_recuperation", "chargecycle_range", "total_electric_distance"):
+                result['community_average'] = attr.community_average
+                result['community_high'] = attr.community_high
+                result['community_low'] = attr.community_low
+                result['user_average'] = attr.user_average
+            if self._attribute == "chargecycle_range":
+                result['user_current_charge_cycle'] = attr.user_current_charge_cycle
+                result['user_high'] = attr.user_high
+            if self._attribute == "total_electric_distance":
+                result['user_total'] = attr.user_total
+        elif self._service == CHARGING_PROFILE:
+            attr = getattr(vehicle_charging_profile, self._attribute)
+            if self._attribute == "preferred_charging_window":
+                result['start_time'] = attr.start_time
+                result['end_time'] = attr.end_time
+            elif self._attribute == "pre_entry_climatization_timer":
+                for timer in attr:
+                    result[f"{timer.value}_timer_enabled"] = attr[timer].timer_enabled
+                    result[f"{timer.value}_departure_time"] = attr[timer].departure_time
+                    result[f"{timer.value}_weekdays"] = attr[timer].weekdays
+        elif self._service == DESTINATIONS:
+            attr = getattr(vehicle_last_destinations, self._attribute)
+            if self._attribute == "last_destinations":
+                dest_nr = 1
+                for destination in attr:
+                    result[f"{dest_nr:02d}_latitude"] = destination.latitude
+                    result[f"{dest_nr:02d}_latitude"] = destination.latitude
+                    result[f"{dest_nr:02d}_longitude"] = destination.longitude
+                    result[f"{dest_nr:02d}_country"] = destination.country
+                    result[f"{dest_nr:02d}_city"] = destination.city
+                    result[f"{dest_nr:02d}_street"] = destination.street
+                    result[f"{dest_nr:02d}_destination_type"] = destination.destination_type.value
+                    result[f"{dest_nr:02d}_created_at"] = destination.created_at
+                    dest_nr += 1
         return sorted(result.items())
 
     def update(self) -> None:
@@ -266,30 +338,31 @@ class BMWConnectedDriveSensor(Entity):
             self._state = round(value_converted)
         elif self._service is None:
             self._state = getattr(vehicle_state, self._attribute)
-        elif self._service == CONF_LAST_TRIP:
+        elif self._service == LAST_TRIP:
             self._state = getattr(vehicle_last_trip, self._attribute)
-        elif self._service == CONF_ALL_TRIPS:
+        elif self._service == ALL_TRIPS:
             attr = getattr(vehicle_all_trips, self._attribute)
-            if self._attribute in ("avgCombinedConsumption", "avgElectricConsumption",
-                "avgRecuperation", "chargecycleRange"):
-                self._state = attr['userAverage']
-            elif self._attribute == "totalElectricDistance":
-                self._state = attr['userTotal']
+            if self._attribute in ("average_combined_consumption", "average_electric_consumption",
+                "average_recuperation", "chargecycle_range"):
+                self._state = attr.user_average
+            elif self._attribute == "total_electric_distance":
+                self._state = attr.user_total
             else:
                 self._state = attr
-        elif self._service == CONF_CHARGING_PROFILE:
+        elif self._service == CHARGING_PROFILE:
             attr = getattr(vehicle_charging_profile, self._attribute)
-            if self._attribute == "preferredChargingWindow":
-                self._state = f"{attr['startTime']}-{attr['endTime']}"
-            elif self._attribute in ("timer1", "timer2", "timer3", "overrideTimer"):
-                self._state = attr['timerEnabled']
+            if self._attribute == "preferred_charging_window":
+                self._state = f"{attr.start_time}-{attr.end_time}"
+            elif self._attribute == "pre_entry_climatization_timer":
+                self._state = len(attr)
             else:
                 self._state = attr
-        elif self._service == CONF_DESTINATIONS:
-            _, dest_nr = self._attribute.split('_')
-            destinations =  vehicle_last_destinations.attributes
-            dest = destinations[int(dest_nr) - 1]
-            self._state = dest['city']
+        elif self._service == DESTINATIONS:
+            attr = getattr(vehicle_last_destinations, self._attribute)
+            if self._attribute == "last_destinations":
+                self._state = len(attr)
+            else:
+                self._state = attr
 
     def update_callback(self):
         """Schedule a state update."""
