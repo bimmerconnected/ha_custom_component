@@ -37,7 +37,6 @@ class BMWDeviceTracker(TrackerEntity):
         )
         self._name = vehicle.name
         self._heading = vehicle.state.vehicle_status.gps_heading
-        self._vin = vehicle.vin
 
     @property
     def latitude(self):
@@ -100,6 +99,7 @@ class BMWDeviceTracker(TrackerEntity):
             if self._vehicle.state.vehicle_status.is_vehicle_tracking_enabled
             else (None, None)
         )
+        self._heading = vehicle.state.vehicle_status.gps_heading
 
     def update_callback(self):
         """Schedule a state update."""
