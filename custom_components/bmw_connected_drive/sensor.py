@@ -169,7 +169,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                     )
                 devices.append(device)
         # AllTrips
-        if vehicle.has_statistics_service:
             for attribute_name in ATTR_ALL_TRIPS:
                 device = BMWConnectedDriveSensor(
                     account, vehicle, attribute_name, attribute_info, ALL_TRIPS
