@@ -5,8 +5,3 @@ CONF_REGION = "region"
 CONF_ALLOWED_REGIONS = ["china", "north_america", "rest_of_world"]
 CONF_READ_ONLY = "read_only"
 CONF_USE_LOCATION = "use_location"
-
-LAST_TRIP = "LAST_TRIP"
-ALL_TRIPS = "ALL_TRIPS"
-CHARGING_PROFILE = "CHARGING_PROFILE"
-DESTINATIONS = "DESTINATIONS"
