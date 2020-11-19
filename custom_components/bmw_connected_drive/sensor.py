@@ -109,8 +109,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     devices = []
 
     for vehicle in account.account.vehicles:
-        services = vehicle.available_state_services
-
         for service in vehicle.available_state_services:
             service_attr = None
             if service == SERVICE_STATUS:
