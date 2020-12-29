@@ -1,13 +1,15 @@
 """Config flow for BMW ConnectedDrive integration."""
 import logging
 
+from bimmer_connected.account import ConnectedDriveAccount
+from bimmer_connected.country_selector import get_region_from_name
 import voluptuous as vol
 
 from homeassistant import config_entries, core, exceptions
 from homeassistant.const import CONF_PASSWORD, CONF_SOURCE, CONF_USERNAME
 from homeassistant.core import callback
 
-from . import DOMAIN, setup_account
+from . import DOMAIN  # pylint: disable=unused-import
 from .const import CONF_ALLOWED_REGIONS, CONF_READ_ONLY, CONF_REGION, CONF_USE_LOCATION
 
 _LOGGER = logging.getLogger(__name__)
@@ -27,29 +29,14 @@ async def validate_input(hass: core.HomeAssistant, data):
 
     Data has the keys from DATA_SCHEMA with values provided by the user.
     """
-
-    entry = config_entries.ConfigEntry(
-        version=1,
-        domain=DOMAIN,
-        title=data[CONF_USERNAME],
-        data=data,
-        source=config_entries.SOURCE_IGNORE,
-        connection_class=config_entries.CONN_CLASS_CLOUD_POLL,
-        options={
-            CONF_READ_ONLY: data.get(CONF_READ_ONLY, False),
-            CONF_USE_LOCATION: False,
-        },
-        system_options={},
-    )
-
     try:
-        account = await hass.async_add_executor_job(
-            setup_account, entry, hass, entry.data[CONF_USERNAME]
+        await hass.async_add_executor_job(
+            ConnectedDriveAccount,
+            data[CONF_USERNAME],
+            data[CONF_PASSWORD],
+            get_region_from_name(data[CONF_REGION]),
         )
-        await hass.async_add_executor_job(account.update)
     except OSError as ex:
-        raise InvalidAuth from ex
-    except Exception as ex:
         raise CannotConnect from ex
 
     # Return info that you want to store in the config entry.
@@ -71,20 +58,14 @@ class BMWConnectedDriveConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             await self.async_set_unique_id(unique_id)
             self._abort_if_unique_id_configured()
 
+            info = None
             try:
                 info = await validate_input(self.hass, user_input)
-                # pylint: disable=no-member
-                if self.context[CONF_SOURCE] == config_entries.SOURCE_IMPORT:
-                    info["title"] = f"{info['title']} (configuration.yaml)"
-
-                return self.async_create_entry(title=info["title"], data=user_input)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
-            except InvalidAuth:
-                errors["base"] = "invalid_auth"
-            except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception("Unexpected exception")
-                errors["base"] = "unknown"
+
+            if info:
+                return self.async_create_entry(title=info["title"], data=user_input)
 
         return self.async_show_form(
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
@@ -136,7 +117,3 @@ class BMWConnectedDriveOptionsFlow(config_entries.OptionsFlow):
 
 class CannotConnect(exceptions.HomeAssistantError):
     """Error to indicate we cannot connect."""
-
-
-class InvalidAuth(exceptions.HomeAssistantError):
-    """Error to indicate there is invalid auth."""

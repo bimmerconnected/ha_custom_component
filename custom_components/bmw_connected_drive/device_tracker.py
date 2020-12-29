@@ -4,33 +4,35 @@ import logging
 from homeassistant.components.device_tracker import SOURCE_TYPE_GPS
 from homeassistant.components.device_tracker.config_entry import TrackerEntity
 
-from . import DOMAIN as BMW_DOMAIN
+from . import DOMAIN as BMW_DOMAIN, BMWConnectedDriveBaseEntity
+from .const import CONF_ACCOUNT, DATA_ENTRIES
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the BMW ConnectedDrive tracker from config entry."""
-    account = hass.data[BMW_DOMAIN][config_entry.entry_id]
-    devices = []
+    account = hass.data[BMW_DOMAIN][DATA_ENTRIES][config_entry.entry_id][CONF_ACCOUNT]
+    entities = []
 
     for vehicle in account.account.vehicles:
-        if vehicle.state.is_vehicle_tracking_enabled:
-            devices.append(BMWDeviceTracker(account, vehicle))
-        else:
+        entities.append(BMWDeviceTracker(account, vehicle))
+        if not vehicle.state.is_vehicle_tracking_enabled:
             _LOGGER.info(
-                "Tracking is disabled for vehicle %s (%s)", vehicle.name, vehicle.vin
+                "Tracking is (currently) disabled for vehicle %s (%s), defaulting to unknown",
+                vehicle.name,
+                vehicle.vin,
             )
-    async_add_entities(devices, True)
+    async_add_entities(entities, True)
 
 
-class BMWDeviceTracker(TrackerEntity):
+class BMWDeviceTracker(BMWConnectedDriveBaseEntity, TrackerEntity):
     """BMW Connected Drive device tracker."""
 
     def __init__(self, account, vehicle):
         """Initialize the Tracker."""
-        self._account = account
-        self._vehicle = vehicle
+        super().__init__(account, vehicle)
+
         self._unique_id = vehicle.vin
         self._location = (
             vehicle.state.gps_position if vehicle.state.gps_position else (None, None)
@@ -58,17 +60,6 @@ class BMWDeviceTracker(TrackerEntity):
         return self._unique_id
 
     @property
-    def device_info(self) -> dict:
-        """Return info for device registry."""
-        return {
-            "identifiers": {(BMW_DOMAIN, self._vehicle.vin)},
-            "sw_version": self._vehicle.vin,
-            "name": f'{self._vehicle.attributes.get("brand")} {self._vehicle.name}',
-            "model": self._vehicle.name,
-            "manufacturer": self._vehicle.attributes.get("brand"),
-        }
-
-    @property
     def source_type(self):
         """Return the source type, eg gps or router, of the device."""
         return SOURCE_TYPE_GPS
@@ -90,14 +81,3 @@ class BMWDeviceTracker(TrackerEntity):
             if self._vehicle.state.is_vehicle_tracking_enabled
             else (None, None)
         )
-
-    def update_callback(self):
-        """Schedule a state update."""
-        self.schedule_update_ha_state(True)
-
-    async def async_added_to_hass(self):
-        """Add callback after being added to hass.
-
-        Show latest data after startup.
-        """
-        self._account.add_update_listener(self.update_callback)
