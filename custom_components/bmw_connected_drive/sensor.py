@@ -6,8 +6,8 @@ from dataclasses import dataclass
 import logging
 
 from bimmer_connected.const import SERVICE_ALL_TRIPS, SERVICE_LAST_TRIP, SERVICE_STATUS
-from bimmer_connected.state import ChargingState
 from bimmer_connected.vehicle import ConnectedDriveVehicle
+from bimmer_connected.vehicle_status import ChargingState
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.config_entries import ConfigEntry
@@ -36,7 +36,7 @@ from . import (
     BMWConnectedDriveAccount,
     BMWConnectedDriveBaseEntity,
 )
-from .const import CONF_ACCOUNT, DATA_ENTRIES
+from .const import CONF_ACCOUNT, DATA_ENTRIES, UNIT_MAP
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -397,12 +397,12 @@ async def async_setup_entry(
                             unit_system,
                             service,
                         )
-                        for attribute_name in vehicle.state.last_trip.available_attributes
+                        for attribute_name in vehicle.status.last_trip.available_attributes
                         if attribute_name != "date"
                         and (description := SENSOR_TYPES.get(attribute_name))  # type: ignore[no-redef]
                     ]
                 )
-                if "date" in vehicle.state.last_trip.available_attributes:
+                if "date" in vehicle.status.last_trip.available_attributes:
                     entities.append(
                         BMWConnectedDriveSensor(
                             account,
@@ -413,7 +413,7 @@ async def async_setup_entry(
                         )
                     )
             if service == SERVICE_ALL_TRIPS:
-                for attribute_name in vehicle.state.all_trips.available_attributes:
+                for attribute_name in vehicle.status.all_trips.available_attributes:
                     if attribute_name == "reset_date":
                         entities.append(
                             BMWConnectedDriveSensor(
@@ -522,22 +522,31 @@ class BMWConnectedDriveSensor(BMWConnectedDriveBaseEntity, SensorEntity):
     def update(self) -> None:
         """Read new state data from the library."""
         _LOGGER.debug("Updating %s", self._vehicle.name)
-        vehicle_state = self._vehicle.state
+        vehicle_state = self._vehicle.status
         sensor_key = self.entity_description.key
+        sensor_value = None
+
         if sensor_key == "charging_status":
-            self._attr_native_value = getattr(vehicle_state, sensor_key).value
-        elif self.unit_of_measurement == VOLUME_GALLONS:
-            value = getattr(vehicle_state, sensor_key)
-            value_converted = self.hass.config.units.volume(value, VOLUME_LITERS)
-            self._attr_native_value = round(value_converted)
-        elif self.unit_of_measurement == LENGTH_MILES:
-            value = getattr(vehicle_state, sensor_key)
-            value_converted = self.hass.config.units.length(value, LENGTH_KILOMETERS)
-            self._attr_native_value = round(value_converted)
+            sensor_value = getattr(vehicle_state, sensor_key).value
         elif self._service is None:
-            self._attr_native_value = getattr(vehicle_state, sensor_key)
+            sensor_value = getattr(vehicle_state, sensor_key)
+
+            if isinstance(sensor_value, tuple):
+                sensor_unit = UNIT_MAP.get(sensor_value[1], sensor_value[1])
+                if sensor_unit == self.unit_of_measurement:
+                    sensor_value = sensor_value[0]
+                elif self.unit_of_measurement in [LENGTH_KILOMETERS, LENGTH_MILES]:
+                    sensor_value = round(
+                        self.hass.config.units.length(sensor_value[0], sensor_unit)
+                    )
+                elif self.unit_of_measurement in [VOLUME_LITERS, VOLUME_GALLONS]:
+                    sensor_value = round(
+                        self.hass.config.units.volume(sensor_value[0], sensor_unit)
+                    )
+            self._attr_native_value = sensor_value
+
         elif self._service == SERVICE_LAST_TRIP:
-            vehicle_last_trip = self._vehicle.state.last_trip
+            vehicle_last_trip = self._vehicle.last_trip
             if sensor_key == "date_utc":
                 date_str = getattr(vehicle_last_trip, "date")
                 if parsed_date := dt_util.parse_datetime(date_str):
@@ -551,7 +560,7 @@ class BMWConnectedDriveSensor(BMWConnectedDriveBaseEntity, SensorEntity):
             else:
                 self._attr_native_value = getattr(vehicle_last_trip, sensor_key)
         elif self._service == SERVICE_ALL_TRIPS:
-            vehicle_all_trips = self._vehicle.state.all_trips
+            vehicle_all_trips = self._vehicle.all_trips
             for attribute in (
                 "average_combined_consumption",
                 "average_electric_consumption",
@@ -577,10 +586,10 @@ class BMWConnectedDriveSensor(BMWConnectedDriveBaseEntity, SensorEntity):
             else:
                 self._attr_native_value = getattr(vehicle_all_trips, sensor_key)
 
-        vehicle_state = self._vehicle.state
-        charging_state = vehicle_state.charging_status in {ChargingState.CHARGING}
-
         if sensor_key == "charging_level_hv":
+            charging_state = self._vehicle.status.charging_status in {
+                ChargingState.CHARGING
+            }
             self._attr_icon = icon_for_battery_level(
                 battery_level=vehicle_state.charging_level_hv, charging=charging_state
             )
