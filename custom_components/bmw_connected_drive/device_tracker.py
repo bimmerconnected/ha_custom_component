@@ -35,7 +35,7 @@ async def async_setup_entry(
 
     for vehicle in account.account.vehicles:
         entities.append(BMWDeviceTracker(account, vehicle))
-        if not vehicle.state.is_vehicle_tracking_enabled:
+        if not vehicle.status.is_vehicle_tracking_enabled:
             _LOGGER.info(
                 "Tracking is (currently) disabled for vehicle %s (%s), defaulting to unknown",
                 vehicle.name,
@@ -59,7 +59,7 @@ class BMWDeviceTracker(BMWConnectedDriveBaseEntity, TrackerEntity):
         super().__init__(account, vehicle)
 
         self._attr_unique_id = vehicle.vin
-        self._location = pos if (pos := vehicle.state.gps_position) else None
+        self._location = pos if (pos := vehicle.status.gps_position) else None
         self._attr_name = vehicle.name
 
     @property
@@ -81,7 +81,7 @@ class BMWDeviceTracker(BMWConnectedDriveBaseEntity, TrackerEntity):
         """Update state of the decvice tracker."""
         self._attr_extra_state_attributes = self._attrs
         self._location = (
-            self._vehicle.state.gps_position
-            if self._vehicle.state.is_vehicle_tracking_enabled
+            self._vehicle.status.gps_position
+            if self._vehicle.status.is_vehicle_tracking_enabled
             else None
         )
