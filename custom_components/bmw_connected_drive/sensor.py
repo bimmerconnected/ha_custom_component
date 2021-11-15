@@ -104,6 +104,12 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         unit_metric=VOLUME_LITERS,
         unit_imperial=VOLUME_GALLONS,
     ),
+    "fuel_percent": BMWSensorEntityDescription(
+        key="fuel_percent",
+        icon="mdi:gas-station",
+        unit_metric=PERCENTAGE,
+        unit_imperial=PERCENTAGE,
+    ),
 }
 
 
