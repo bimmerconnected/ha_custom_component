@@ -5,7 +5,7 @@ from copy import copy
 from dataclasses import dataclass
 import logging
 
-from bimmer_connected.const import SERVICE_ALL_TRIPS, SERVICE_LAST_TRIP, SERVICE_STATUS
+from bimmer_connected.const import SERVICE_STATUS
 from bimmer_connected.vehicle import ConnectedDriveVehicle
 from bimmer_connected.vehicle_status import ChargingState
 
@@ -385,106 +385,6 @@ async def async_setup_entry(
                         and (description := SENSOR_TYPES.get(attribute_name))
                     ]
                 )
-            if service == SERVICE_LAST_TRIP:
-                entities.extend(
-                    [
-                        # mypy issues will be fixed in next release
-                        # https://github.com/python/mypy/issues/9096
-                        BMWConnectedDriveSensor(
-                            account,
-                            vehicle,
-                            description,  # type: ignore[arg-type]
-                            unit_system,
-                            service,
-                        )
-                        for attribute_name in vehicle.status.last_trip.available_attributes
-                        if attribute_name != "date"
-                        and (description := SENSOR_TYPES.get(attribute_name))  # type: ignore[no-redef]
-                    ]
-                )
-                if "date" in vehicle.status.last_trip.available_attributes:
-                    entities.append(
-                        BMWConnectedDriveSensor(
-                            account,
-                            vehicle,
-                            SENSOR_TYPES["date_utc"],
-                            unit_system,
-                            service,
-                        )
-                    )
-            if service == SERVICE_ALL_TRIPS:
-                for attribute_name in vehicle.status.all_trips.available_attributes:
-                    if attribute_name == "reset_date":
-                        entities.append(
-                            BMWConnectedDriveSensor(
-                                account,
-                                vehicle,
-                                SENSOR_TYPES["reset_date_utc"],
-                                unit_system,
-                                service,
-                            )
-                        )
-                    elif attribute_name in (
-                        "average_combined_consumption",
-                        "average_electric_consumption",
-                        "average_recuperation",
-                        "chargecycle_range",
-                        "total_electric_distance",
-                    ):
-                        entities.extend(
-                            [
-                                BMWConnectedDriveSensor(
-                                    account,
-                                    vehicle,
-                                    SENSOR_TYPES[f"{attribute_name}_{attr}"],
-                                    unit_system,
-                                    service,
-                                )
-                                for attr in (
-                                    "community_average",
-                                    "community_high",
-                                    "community_low",
-                                    "user_average",
-                                )
-                            ]
-                        )
-                        if attribute_name == "chargecycle_range":
-                            entities.extend(
-                                BMWConnectedDriveSensor(
-                                    account,
-                                    vehicle,
-                                    SENSOR_TYPES[f"{attribute_name}_{attr}"],
-                                    unit_system,
-                                    service,
-                                )
-                                for attr in ("user_current_charge_cycle", "user_high")
-                            )
-                        elif attribute_name == "total_electric_distance":
-                            entities.extend(
-                                [
-                                    BMWConnectedDriveSensor(
-                                        account,
-                                        vehicle,
-                                        SENSOR_TYPES[f"{attribute_name}_{attr}"],
-                                        unit_system,
-                                        service,
-                                    )
-                                    for attr in ("user_total",)
-                                ]
-                            )
-                    else:
-                        if (description := SENSOR_TYPES.get(attribute_name)) is None:
-                            description = copy(DEFAULT_BMW_DESCRIPTION)
-                            description.key = attribute_name
-                        entities.append(
-                            BMWConnectedDriveSensor(
-                                account,
-                                vehicle,
-                                description,
-                                unit_system,
-                                service,
-                            )
-                        )
 
     async_add_entities(entities, True)
 
@@ -544,47 +444,6 @@ class BMWConnectedDriveSensor(BMWConnectedDriveBaseEntity, SensorEntity):
                         self.hass.config.units.volume(sensor_value[0], sensor_unit)
                     )
             self._attr_native_value = sensor_value
-
-        elif self._service == SERVICE_LAST_TRIP:
-            vehicle_last_trip = self._vehicle.last_trip
-            if sensor_key == "date_utc":
-                date_str = getattr(vehicle_last_trip, "date")
-                if parsed_date := dt_util.parse_datetime(date_str):
-                    self._attr_native_value = parsed_date.isoformat()
-                else:
-                    _LOGGER.debug(
-                        "Could not parse date string for 'date_utc' sensor: %s",
-                        date_str,
-                    )
-                    self._attr_native_value = None
-            else:
-                self._attr_native_value = getattr(vehicle_last_trip, sensor_key)
-        elif self._service == SERVICE_ALL_TRIPS:
-            vehicle_all_trips = self._vehicle.all_trips
-            for attribute in (
-                "average_combined_consumption",
-                "average_electric_consumption",
-                "average_recuperation",
-                "chargecycle_range",
-                "total_electric_distance",
-            ):
-                if sensor_key.startswith(f"{attribute}_"):
-                    attr = getattr(vehicle_all_trips, attribute)
-                    sub_attr = sensor_key.replace(f"{attribute}_", "")
-                    self._attr_native_value = getattr(attr, sub_attr)
-                    return
-            if sensor_key == "reset_date_utc":
-                date_str = getattr(vehicle_all_trips, "reset_date")
-                if parsed_date := dt_util.parse_datetime(date_str):
-                    self._attr_native_value = parsed_date.isoformat()
-                else:
-                    _LOGGER.debug(
-                        "Could not parse date string for 'reset_date_utc' sensor: %s",
-                        date_str,
-                    )
-                    self._attr_native_value = None
-            else:
-                self._attr_native_value = getattr(vehicle_all_trips, sensor_key)
 
         if sensor_key == "charging_level_hv":
             charging_state = self._vehicle.status.charging_status in {
