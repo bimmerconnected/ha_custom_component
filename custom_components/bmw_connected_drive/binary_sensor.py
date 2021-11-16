@@ -253,6 +253,7 @@ class BMWConnectedDriveSensor(BMWConnectedDriveBaseEntity, BinarySensorEntity):
 
     def update(self) -> None:
         """Read new state data from the library."""
+        _LOGGER.debug("Updating binary sensors of %s", self._vehicle.name)
         vehicle_state = self._vehicle.status
         result = self._attrs.copy()
 

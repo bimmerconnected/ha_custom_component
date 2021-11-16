@@ -1,7 +1,7 @@
 {
   "domain": "bmw_connected_drive",
   "name": "BMW Connected Drive",
-  "version": "20211115.2",
+  "version": "20211116.2",
   "documentation": "https://www.home-assistant.io/integrations/bmw_connected_drive",
   "requirements": ["bimmer_connected==0.8.0.0b7"],
   "codeowners": ["@gerard33", "@rikroe"],
