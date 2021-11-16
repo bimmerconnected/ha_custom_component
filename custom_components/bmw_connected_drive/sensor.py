@@ -140,9 +140,8 @@ async def async_setup_entry(
                         BMWConnectedDriveSensor(
                             account, vehicle, description, unit_system
                         )
-                        for attribute_name in vehicle.drive_train_attributes
-                        if attribute_name in vehicle.available_attributes
-                        and (description := SENSOR_TYPES.get(attribute_name))
+                        for attribute_name in vehicle.available_attributes
+                        if (description := SENSOR_TYPES.get(attribute_name))
                     ]
                 )
 
@@ -181,7 +180,7 @@ class BMWConnectedDriveSensor(BMWConnectedDriveBaseEntity, SensorEntity):
 
     def update(self) -> None:
         """Read new state data from the library."""
-        _LOGGER.debug("Updating %s", self._vehicle.name)
+        _LOGGER.debug("Updating sensors of %s", self._vehicle.name)
         vehicle_state = self._vehicle.status
         sensor_key = self.entity_description.key
         sensor_value = None
@@ -190,34 +189,29 @@ class BMWConnectedDriveSensor(BMWConnectedDriveBaseEntity, SensorEntity):
             sensor_value = getattr(vehicle_state, sensor_key).value
         elif self._service is None:
             sensor_value = getattr(vehicle_state, sensor_key)
-            if sensor_key in ["remaining_range_electric"]:
-                _LOGGER.debug(
-                    "sensor value for '%s' is '%s'. Source data: '%s'",
-                    sensor_key,
-                    sensor_value, vehicle_state.status["fuelIndicators"]
-                )
-
-            if sensor_key in ["charging_level_hv"]:
-                _LOGGER.debug(
-                    "sensor value for '%s' is '%s'. Source data: '%s'",
-                    sensor_key,
-                    sensor_value,
-                    vehicle_state.properties["electricRangeAndStatus"]["chargePercentage"]
-                )
 
             if isinstance(sensor_value, tuple):
                 sensor_unit = UNIT_MAP.get(sensor_value[1], sensor_value[1])
-                if sensor_unit == self.unit_of_measurement:
-                    sensor_value = sensor_value[0]
-                elif self.unit_of_measurement in [LENGTH_KILOMETERS, LENGTH_MILES]:
+                sensor_value = sensor_value[0]
+                sensor_value_org = sensor_value
+                
+                if self.unit_of_measurement in [LENGTH_KILOMETERS, LENGTH_MILES]:
                     sensor_value = round(
-                        self.hass.config.units.length(sensor_value[0], sensor_unit)
+                        self.hass.config.units.length(sensor_value, sensor_unit)
                     )
                 elif self.unit_of_measurement in [VOLUME_LITERS, VOLUME_GALLONS]:
                     sensor_value = round(
-                        self.hass.config.units.volume(sensor_value[0], sensor_unit)
+                        self.hass.config.units.volume(sensor_value, sensor_unit)
                     )
-            self._attr_native_value = sensor_value
+
+                _LOGGER.debug(
+                    "UoM Conversion for %s. HA: %s %s, Vehicle: %s %s.",
+                    sensor_key,
+                    sensor_value, self.unit_of_measurement,
+                    sensor_value_org, sensor_unit
+                )
+
+        self._attr_native_value = sensor_value
 
         if sensor_key == "charging_level_hv":
             charging_state = self._vehicle.status.charging_status in {
@@ -226,3 +220,4 @@ class BMWConnectedDriveSensor(BMWConnectedDriveBaseEntity, SensorEntity):
             self._attr_icon = icon_for_battery_level(
                 battery_level=vehicle_state.charging_level_hv, charging=charging_state
             )
+
