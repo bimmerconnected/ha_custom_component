@@ -190,6 +190,20 @@ class BMWConnectedDriveSensor(BMWConnectedDriveBaseEntity, SensorEntity):
             sensor_value = getattr(vehicle_state, sensor_key).value
         elif self._service is None:
             sensor_value = getattr(vehicle_state, sensor_key)
+            if sensor_key in ["remaining_range_electric"]:
+                _LOGGER.debug(
+                    "sensor value for '%s' is '%s'. Source data: '%s'",
+                    sensor_key,
+                    sensor_value, vehicle_state.status["fuelIndicators"]
+                )
+
+            if sensor_key in ["charging_level_hv"]:
+                _LOGGER.debug(
+                    "sensor value for '%s' is '%s'. Source data: '%s'",
+                    sensor_key,
+                    sensor_value,
+                    vehicle_state.properties["electricRangeAndStatus"]["chargePercentage"]
+                )
 
             if isinstance(sensor_value, tuple):
                 sensor_unit = UNIT_MAP.get(sensor_value[1], sensor_value[1])
