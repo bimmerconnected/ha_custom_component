@@ -1,9 +1,9 @@
 {
   "domain": "bmw_connected_drive",
   "name": "BMW Connected Drive",
-  "version": "20211117.1",
+  "version": "20211117.2",
   "documentation": "https://www.home-assistant.io/integrations/bmw_connected_drive",
-  "requirements": ["bimmer_connected==0.8.0.0b8"],
+  "requirements": ["bimmer_connected==0.8.0.0b9"],
   "codeowners": ["@gerard33", "@rikroe"],
   "config_flow": true,
   "iot_class": "cloud_polling"
