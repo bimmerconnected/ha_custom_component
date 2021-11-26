@@ -208,13 +208,10 @@ def setup_account(
     password: str = entry.data[CONF_PASSWORD]
     region: str = entry.data[CONF_REGION]
     read_only: bool = entry.options[CONF_READ_ONLY]
-    use_location: bool = entry.options[CONF_USE_LOCATION]
 
     _LOGGER.debug("Adding new account %s", name)
 
-    pos = (
-        (hass.config.latitude, hass.config.longitude) if use_location else (None, None)
-    )
+    pos = (hass.config.latitude, hass.config.longitude)
     cd_account = BMWConnectedDriveAccount(
         username, password, region, name, read_only, *pos
     )
@@ -250,6 +247,13 @@ def setup_account(
         function_name = _SERVICE_MAP[call.service]
         function_call = getattr(vehicle.remote_services, function_name)
         function_call()
+
+        if call.service in [
+            "find_vehicle",
+            "activate_air_conditioning",
+            "deactivate_air_conditioning",
+        ]:
+            cd_account.update()
 
     if not read_only:
         # register the remote services
