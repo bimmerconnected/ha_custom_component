@@ -1,34 +1,28 @@
 """Support for reading vehicle status from BMW connected drive portal."""
 from __future__ import annotations
 
-from copy import copy
+from collections.abc import Callable
 from dataclasses import dataclass
 import logging
+from typing import cast
 
-from bimmer_connected.const import SERVICE_STATUS
 from bimmer_connected.vehicle import ConnectedDriveVehicle
-from bimmer_connected.vehicle_status import ChargingState
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_UNIT_SYSTEM_IMPERIAL,
-    DEVICE_CLASS_TIMESTAMP,
-    ENERGY_KILO_WATT_HOUR,
-    ENERGY_WATT_HOUR,
+    DEVICE_CLASS_BATTERY,
     LENGTH_KILOMETERS,
     LENGTH_MILES,
-    MASS_KILOGRAMS,
     PERCENTAGE,
     TIME_HOURS,
-    TIME_MINUTES,
     VOLUME_GALLONS,
     VOLUME_LITERS,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.icon import icon_for_battery_level
-import homeassistant.util.dt as dt_util
+from homeassistant.helpers.typing import StateType
 from homeassistant.util.unit_system import UnitSystem
 
 from . import (
@@ -47,6 +41,7 @@ class BMWSensorEntityDescription(SensorEntityDescription):
 
     unit_metric: str | None = None
     unit_imperial: str | None = None
+    value: Callable = lambda x, y: x
 
 
 SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
@@ -59,13 +54,14 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
     ),
     "charging_status": BMWSensorEntityDescription(
         key="charging_status",
-        icon="mdi:battery-charging",
+        icon="mdi:ev-station",
+        value=lambda x, y: x.value,
     ),
-    # No icon as this is dealt with directly as a special case in icon()
     "charging_level_hv": BMWSensorEntityDescription(
         key="charging_level_hv",
         unit_metric=PERCENTAGE,
         unit_imperial=PERCENTAGE,
+        device_class=DEVICE_CLASS_BATTERY,
     ),
     # --- Specific ---
     "mileage": BMWSensorEntityDescription(
@@ -73,36 +69,45 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         icon="mdi:speedometer",
         unit_metric=LENGTH_KILOMETERS,
         unit_imperial=LENGTH_MILES,
+        value=lambda x, hass: round(
+            hass.config.units.length(x[0], UNIT_MAP.get(x[1], x[1]))
+        ),
     ),
     "remaining_range_total": BMWSensorEntityDescription(
         key="remaining_range_total",
         icon="mdi:map-marker-distance",
         unit_metric=LENGTH_KILOMETERS,
         unit_imperial=LENGTH_MILES,
+        value=lambda x, hass: round(
+            hass.config.units.length(x[0], UNIT_MAP.get(x[1], x[1]))
+        ),
     ),
     "remaining_range_electric": BMWSensorEntityDescription(
         key="remaining_range_electric",
         icon="mdi:map-marker-distance",
         unit_metric=LENGTH_KILOMETERS,
         unit_imperial=LENGTH_MILES,
+        value=lambda x, hass: round(
+            hass.config.units.length(x[0], UNIT_MAP.get(x[1], x[1]))
+        ),
     ),
     "remaining_range_fuel": BMWSensorEntityDescription(
         key="remaining_range_fuel",
         icon="mdi:map-marker-distance",
         unit_metric=LENGTH_KILOMETERS,
         unit_imperial=LENGTH_MILES,
-    ),
-    "max_range_electric": BMWSensorEntityDescription(
-        key="max_range_electric",
-        icon="mdi:map-marker-distance",
-        unit_metric=LENGTH_KILOMETERS,
-        unit_imperial=LENGTH_MILES,
+        value=lambda x, hass: round(
+            hass.config.units.length(x[0], UNIT_MAP.get(x[1], x[1]))
+        ),
     ),
     "remaining_fuel": BMWSensorEntityDescription(
         key="remaining_fuel",
         icon="mdi:gas-station",
         unit_metric=VOLUME_LITERS,
         unit_imperial=VOLUME_GALLONS,
+        value=lambda x, hass: round(
+            hass.config.units.volume(x[0], UNIT_MAP.get(x[1], x[1]))
+        ),
     ),
     "fuel_percent": BMWSensorEntityDescription(
         key="fuel_percent",
@@ -113,19 +118,12 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
 }
 
 
-DEFAULT_BMW_DESCRIPTION = BMWSensorEntityDescription(
-    key="",
-    entity_registry_enabled_default=True,
-)
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the BMW ConnectedDrive sensors from config entry."""
-    # pylint: disable=too-many-nested-blocks
     unit_system = hass.config.units
     account: BMWConnectedDriveAccount = hass.data[BMW_DOMAIN][DATA_ENTRIES][
         config_entry.entry_id
@@ -133,17 +131,13 @@ async def async_setup_entry(
     entities: list[BMWConnectedDriveSensor] = []
 
     for vehicle in account.account.vehicles:
-        for service in vehicle.available_state_services:
-            if service == SERVICE_STATUS:
-                entities.extend(
-                    [
-                        BMWConnectedDriveSensor(
-                            account, vehicle, description, unit_system
-                        )
-                        for attribute_name in vehicle.available_attributes
-                        if (description := SENSOR_TYPES.get(attribute_name))
-                    ]
-                )
+        entities.extend(
+            [
+                BMWConnectedDriveSensor(account, vehicle, description, unit_system)
+                for attribute_name in vehicle.available_attributes
+                if (description := SENSOR_TYPES.get(attribute_name))
+            ]
+        )
 
     async_add_entities(entities, True)
 
@@ -159,65 +153,21 @@ class BMWConnectedDriveSensor(BMWConnectedDriveBaseEntity, SensorEntity):
         vehicle: ConnectedDriveVehicle,
         description: BMWSensorEntityDescription,
         unit_system: UnitSystem,
-        service: str | None = None,
     ) -> None:
         """Initialize BMW vehicle sensor."""
         super().__init__(account, vehicle)
         self.entity_description = description
 
-        self._service = service
-        if service:
-            self._attr_name = f"{vehicle.name} {service.lower()}_{description.key}"
-            self._attr_unique_id = f"{vehicle.vin}-{service.lower()}-{description.key}"
-        else:
-            self._attr_name = f"{vehicle.name} {description.key}"
-            self._attr_unique_id = f"{vehicle.vin}-{description.key}"
+        self._attr_name = f"{vehicle.name} {description.key}"
+        self._attr_unique_id = f"{vehicle.vin}-{description.key}"
 
         if unit_system.name == CONF_UNIT_SYSTEM_IMPERIAL:
             self._attr_native_unit_of_measurement = description.unit_imperial
         else:
             self._attr_native_unit_of_measurement = description.unit_metric
 
-    def update(self) -> None:
-        """Read new state data from the library."""
-        _LOGGER.debug("Updating sensors of %s", self._vehicle.name)
-        vehicle_state = self._vehicle.status
-        sensor_key = self.entity_description.key
-        sensor_value = None
-
-        if sensor_key == "charging_status":
-            sensor_value = getattr(vehicle_state, sensor_key).value
-        elif self._service is None:
-            sensor_value = getattr(vehicle_state, sensor_key)
-
-            if isinstance(sensor_value, tuple):
-                sensor_unit = UNIT_MAP.get(sensor_value[1], sensor_value[1])
-                sensor_value = sensor_value[0]
-                sensor_value_org = sensor_value
-                
-                if self.unit_of_measurement in [LENGTH_KILOMETERS, LENGTH_MILES]:
-                    sensor_value = round(
-                        self.hass.config.units.length(sensor_value, sensor_unit)
-                    )
-                elif self.unit_of_measurement in [VOLUME_LITERS, VOLUME_GALLONS]:
-                    sensor_value = round(
-                        self.hass.config.units.volume(sensor_value, sensor_unit)
-                    )
-
-                _LOGGER.debug(
-                    "UoM Conversion for %s. HA: %s %s, Vehicle: %s %s.",
-                    sensor_key,
-                    sensor_value, self.unit_of_measurement,
-                    sensor_value_org, sensor_unit
-                )
-
-        self._attr_native_value = sensor_value
-
-        if sensor_key == "charging_level_hv":
-            charging_state = self._vehicle.status.charging_status in {
-                ChargingState.CHARGING
-            }
-            self._attr_icon = icon_for_battery_level(
-                battery_level=vehicle_state.charging_level_hv, charging=charging_state
-            )
-
+    @property
+    def native_value(self) -> StateType:
+        """Return the state."""
+        state = getattr(self._vehicle.status, self.entity_description.key)
+        return cast(StateType, self.entity_description.value(state, self.hass))
