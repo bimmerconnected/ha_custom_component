@@ -1,4 +1,4 @@
 {
     "name": "BMW Connected Drive BETA",
-    "render_readme": true
-}
+    "url": "https://github.com/bimmerconnected/ha_custom_component/",
+    "maintainer": "bimmerconnected"
