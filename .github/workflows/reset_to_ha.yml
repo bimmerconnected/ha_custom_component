@@ -25,10 +25,11 @@ jobs:
           git clone https://github.com/home-assistant/core.git ${{ runner.temp }}/core
           cd ${{ runner.temp }}/core
           echo "HA_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
+          git checkout tags/${{ env.HA_VERSION }}
           
       - name: Checkout latest HA release tag
         run: |
-          git fetch origin --tags
+          cd ${{ runner.temp }}/core
           git checkout tags/${{ env.HA_VERSION }}
       
       - name: Copy component from HA into workspace
