@@ -26,8 +26,14 @@ jobs:
           cd ${{ runner.temp }}/core
           echo "HA_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
           
-      - name: Print HA version
+      - name: Checkout latest HA release tag
         run: |
-          echo ${{ env.HA_VERSION }}
-          git checkout tags/ ${{ env.HA_VERSION }}
+          git checkout tags/${{ env.HA_VERSION }}
+      
+      - name: Copy component from HA into workspace
+        run: |
+          rsync -av --delete \
+            ${{ runner.temp }}/core/homeassistant/components/bmw_connected_drive \
+            ${{ github.workspace }}/custom_components/bmw_connected_drive
+          git status
 
