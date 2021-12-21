@@ -24,7 +24,7 @@ jobs:
         run: |
           git clone https://github.com/home-assistant/core.git ${{ runner.temp }}/core
           export TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
-          git checkout tags/$TAG
+          git checkout "tags/$TAG"
           echo "HA_VERSION=$TAG" >> $GITHUB_ENV
           
       - name: Print HA version
