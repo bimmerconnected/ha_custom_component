@@ -8,14 +8,12 @@ from typing import cast
 
 from bimmer_connected.vehicle import ConnectedDriveVehicle
 
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-    SensorEntityDescription,
-)
+from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_UNIT_SYSTEM_IMPERIAL,
+    DEVICE_CLASS_BATTERY,
+    DEVICE_CLASS_TIMESTAMP,
     LENGTH_KILOMETERS,
     LENGTH_MILES,
     PERCENTAGE,
@@ -50,12 +48,12 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
     # --- Generic ---
     "charging_start_time": BMWSensorEntityDescription(
         key="charging_start_time",
-        device_class=SensorDeviceClass.TIMESTAMP,
+        device_class=DEVICE_CLASS_TIMESTAMP,
         entity_registry_enabled_default=False,
     ),
     "charging_end_time": BMWSensorEntityDescription(
         key="charging_end_time",
-        device_class=SensorDeviceClass.TIMESTAMP,
+        device_class=DEVICE_CLASS_TIMESTAMP,
     ),
     "charging_time_label": BMWSensorEntityDescription(
         key="charging_time_label",
@@ -70,7 +68,7 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         key="charging_level_hv",
         unit_metric=PERCENTAGE,
         unit_imperial=PERCENTAGE,
-        device_class=SensorDeviceClass.BATTERY,
+        device_class=DEVICE_CLASS_BATTERY,
     ),
     # --- Specific ---
     "mileage": BMWSensorEntityDescription(
