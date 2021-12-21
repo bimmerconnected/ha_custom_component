@@ -25,16 +25,24 @@ jobs:
           git clone https://github.com/home-assistant/core.git ${{ runner.temp }}/core
           cd ${{ runner.temp }}/core
           echo "HA_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
-          
+
       - name: Checkout latest HA release tag
         run: |
           cd ${{ runner.temp }}/core
           git checkout tags/${{ env.HA_VERSION }}
-      
+
       - name: Copy component from HA into workspace
         run: |
           rsync -av --delete \
             ${{ runner.temp }}/core/homeassistant/components/bmw_connected_drive/ \
             ${{ github.workspace }}/custom_components/bmw_connected_drive
-          git status
+
+      - name: Create PR with new changes
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: Update to Home Assistant ${{ env.HA_VERSION }}
+          branch: core/${{ env.HA_VERSION }}
+          delete-branch: true
+          title: Update to Home Assistant ${{ env.HA_VERSION }}
+
 
