@@ -13,10 +13,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_UNIT_SYSTEM_IMPERIAL,
     DEVICE_CLASS_BATTERY,
-    DEVICE_CLASS_TIMESTAMP,
     LENGTH_KILOMETERS,
     LENGTH_MILES,
     PERCENTAGE,
+    TIME_HOURS,
     VOLUME_GALLONS,
     VOLUME_LITERS,
 )
@@ -46,13 +46,11 @@ class BMWSensorEntityDescription(SensorEntityDescription):
 
 SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
     # --- Generic ---
-    "charging_end_time": BMWSensorEntityDescription(
-        key="charging_end_time",
-        device_class=DEVICE_CLASS_TIMESTAMP,
-    ),
-    "charging_end_time_original": BMWSensorEntityDescription(
-        key="charging_end_time_original",
-        entity_registry_enabled_default=False,
+    "charging_time_remaining": BMWSensorEntityDescription(
+        key="charging_time_remaining",
+        icon="mdi:update",
+        unit_metric=TIME_HOURS,
+        unit_imperial=TIME_HOURS,
     ),
     "charging_status": BMWSensorEntityDescription(
         key="charging_status",
