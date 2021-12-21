@@ -28,5 +28,5 @@ jobs:
           echo "HA_VERSION=$TAG" >> $GITHUB_ENV
           
       - name: Print HA version
-        run: echo ${{ GITHUB_ENV.HA_VERSION }}
+        run: echo ${{ env.HA_VERSION }}
 
