@@ -28,6 +28,7 @@ jobs:
           
       - name: Checkout latest HA release tag
         run: |
+          git fetch origin --tags
           git checkout tags/${{ env.HA_VERSION }}
       
       - name: Copy component from HA into workspace
