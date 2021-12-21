@@ -37,6 +37,10 @@ jobs:
             ${{ runner.temp }}/core/homeassistant/components/bmw_connected_drive/ \
             ${{ github.workspace }}/custom_components/bmw_connected_drive
 
+      - name: Copy component from HA into workspace
+        run: |
+          sed -i "$(($(wc -l < manifest.json) - 1))i\\  \"version\": \"${{ env.HA_VERSION }}-custom\",\\" manifest.json
+
       - name: Create PR with new changes
         uses: peter-evans/create-pull-request@v3
         with:
