@@ -20,13 +20,13 @@ jobs:
       - uses: actions/checkout@v2
 
       # Runs a set of commands using the runners shell
-      - name: Get latest Home Assistant release tag
+      - name: Clone Home Assistant & get latest tag
         run: |
           git clone https://github.com/home-assistant/core.git ${{ runner.temp }}/core
-          export TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
-          git checkout "tags/$TAG"
-          echo "HA_VERSION=$TAG" >> $GITHUB_ENV
+          echo "HA_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
           
       - name: Print HA version
-        run: echo ${{ env.HA_VERSION }}
+        run: |
+          echo ${{ env.HA_VERSION }}
+          git checkout tags/ ${{ env.HA_VERSION }}
 
