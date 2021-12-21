@@ -34,7 +34,7 @@ jobs:
       - name: Copy component from HA into workspace
         run: |
           rsync -av --delete \
-            ${{ runner.temp }}/core/homeassistant/components/bmw_connected_drive \
+            ${{ runner.temp }}/core/homeassistant/components/bmw_connected_drive/ \
             ${{ github.workspace }}/custom_components/bmw_connected_drive
           git status
 
