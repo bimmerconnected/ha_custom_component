@@ -5,6 +5,6 @@
   "requirements": ["bimmer_connected==0.8.7"],
   "codeowners": ["@gerard33", "@rikroe"],
   "config_flow": true,
-  "version": "2021.12.4-custom",
+  "version": "2021.12.7-custom",
   "iot_class": "cloud_polling"
 }
