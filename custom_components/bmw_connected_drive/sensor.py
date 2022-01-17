@@ -46,11 +46,18 @@ class BMWSensorEntityDescription(SensorEntityDescription):
 
 SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
     # --- Generic ---
-    "charging_time_remaining": BMWSensorEntityDescription(
-        key="charging_time_remaining",
-        icon="mdi:update",
-        unit_metric=TIME_HOURS,
-        unit_imperial=TIME_HOURS,
+    "charging_start_time": BMWSensorEntityDescription(
+        key="charging_start_time",
+        device_class=DEVICE_CLASS_TIMESTAMP,
+        entity_registry_enabled_default=False,
+    ),
+    "charging_end_time": BMWSensorEntityDescription(
+        key="charging_end_time",
+        device_class=DEVICE_CLASS_TIMESTAMP,
+    ),
+    "charging_time_label": BMWSensorEntityDescription(
+        key="charging_time_label",
+        entity_registry_enabled_default=False,
     ),
     "charging_status": BMWSensorEntityDescription(
         key="charging_status",
