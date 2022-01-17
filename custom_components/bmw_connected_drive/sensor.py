@@ -13,10 +13,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_UNIT_SYSTEM_IMPERIAL,
     DEVICE_CLASS_BATTERY,
+    DEVICE_CLASS_TIMESTAMP,
     LENGTH_KILOMETERS,
     LENGTH_MILES,
     PERCENTAGE,
-    TIME_HOURS,
     VOLUME_GALLONS,
     VOLUME_LITERS,
 )
