@@ -8,12 +8,14 @@ from typing import cast
 
 from bimmer_connected.vehicle import ConnectedDriveVehicle
 
-from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_UNIT_SYSTEM_IMPERIAL,
-    DEVICE_CLASS_BATTERY,
-    DEVICE_CLASS_TIMESTAMP,
     LENGTH_KILOMETERS,
     LENGTH_MILES,
     PERCENTAGE,
@@ -48,12 +50,12 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
     # --- Generic ---
     "charging_start_time": BMWSensorEntityDescription(
         key="charging_start_time",
-        device_class=DEVICE_CLASS_TIMESTAMP,
+        device_class=SensorDeviceClass.TIMESTAMP,
         entity_registry_enabled_default=False,
     ),
     "charging_end_time": BMWSensorEntityDescription(
         key="charging_end_time",
-        device_class=DEVICE_CLASS_TIMESTAMP,
+        device_class=SensorDeviceClass.TIMESTAMP,
     ),
     "charging_time_label": BMWSensorEntityDescription(
         key="charging_time_label",
@@ -68,7 +70,7 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         key="charging_level_hv",
         unit_metric=PERCENTAGE,
         unit_imperial=PERCENTAGE,
-        device_class=DEVICE_CLASS_BATTERY,
+        device_class=SensorDeviceClass.BATTERY,
     ),
     # --- Specific ---
     "mileage": BMWSensorEntityDescription(
@@ -77,7 +79,7 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         unit_metric=LENGTH_KILOMETERS,
         unit_imperial=LENGTH_MILES,
         value=lambda x, hass: round(
-            hass.config.units.length(x[0], UNIT_MAP.get(x[1], x[1]))
+            hass.config.units.length(x[0], UNIT_MAP.get(x[1], x[1])), 2
         ),
     ),
     "remaining_range_total": BMWSensorEntityDescription(
@@ -86,7 +88,7 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         unit_metric=LENGTH_KILOMETERS,
         unit_imperial=LENGTH_MILES,
         value=lambda x, hass: round(
-            hass.config.units.length(x[0], UNIT_MAP.get(x[1], x[1]))
+            hass.config.units.length(x[0], UNIT_MAP.get(x[1], x[1])), 2
         ),
     ),
     "remaining_range_electric": BMWSensorEntityDescription(
@@ -95,7 +97,7 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         unit_metric=LENGTH_KILOMETERS,
         unit_imperial=LENGTH_MILES,
         value=lambda x, hass: round(
-            hass.config.units.length(x[0], UNIT_MAP.get(x[1], x[1]))
+            hass.config.units.length(x[0], UNIT_MAP.get(x[1], x[1])), 2
         ),
     ),
     "remaining_range_fuel": BMWSensorEntityDescription(
@@ -104,7 +106,7 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         unit_metric=LENGTH_KILOMETERS,
         unit_imperial=LENGTH_MILES,
         value=lambda x, hass: round(
-            hass.config.units.length(x[0], UNIT_MAP.get(x[1], x[1]))
+            hass.config.units.length(x[0], UNIT_MAP.get(x[1], x[1])), 2
         ),
     ),
     "remaining_fuel": BMWSensorEntityDescription(
@@ -113,7 +115,7 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         unit_metric=VOLUME_LITERS,
         unit_imperial=VOLUME_GALLONS,
         value=lambda x, hass: round(
-            hass.config.units.volume(x[0], UNIT_MAP.get(x[1], x[1]))
+            hass.config.units.volume(x[0], UNIT_MAP.get(x[1], x[1])), 2
         ),
     ),
     "fuel_percent": BMWSensorEntityDescription(
