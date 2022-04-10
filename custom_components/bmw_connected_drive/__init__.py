@@ -1,9 +1,9 @@
-"""Reads vehicle status from BMW connected drive portal."""
+"""Reads vehicle status from MyBMW portal."""
 from __future__ import annotations
 
 from typing import Any
 
-from bimmer_connected.vehicle import ConnectedDriveVehicle
+from bimmer_connected.vehicle import MyBMWVehicle
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
@@ -23,14 +23,7 @@ from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import (
-    ATTR_VIN,
-    ATTRIBUTION,
-    CONF_READ_ONLY,
-    DATA_HASS_CONFIG,
-    DOMAIN,
-    SERVICE_MAP,
-)
+from .const import ATTR_VIN, ATTRIBUTION, CONF_READ_ONLY, DATA_HASS_CONFIG, DOMAIN
 from .coordinator import BMWDataUpdateCoordinator
 
 CONFIG_SCHEMA = cv.removed(DOMAIN, raise_if_present=False)
@@ -59,7 +52,7 @@ SERVICE_UPDATE_STATE = "update_state"
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the BMW Connected Drive component from configuration.yaml."""
+    """Set up the MyBMW component from configuration.yaml."""
     # Store full yaml config in data for platform.NOTIFY
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][DATA_HASS_CONFIG] = config
@@ -82,7 +75,7 @@ def _async_migrate_options_from_data_if_missing(
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up BMW Connected Drive from a config entry."""
+    """Set up MyBMW from a config entry."""
 
     _async_migrate_options_from_data_if_missing(hass, entry)
 
@@ -98,18 +91,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
-
-    # Service to manually trigger updates for all accounts.
-    # Deprecated and will be removed in 2022.4 when only buttons are supported.
-    hass.services.async_register(
-        DOMAIN, SERVICE_UPDATE_STATE, coordinator.async_request_refresh
-    )
-    # Add all other services
-    # Deprecated and will be removed in 2022.4 when only buttons are supported.
-    for service in SERVICE_MAP:
-        hass.services.async_register(
-            DOMAIN, service, coordinator.async_execute_service, schema=SERVICE_SCHEMA
-        )
 
     # Set up all platforms except notify
     hass.config_entries.async_setup_platforms(
@@ -140,15 +121,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry, [platform for platform in PLATFORMS if platform != Platform.NOTIFY]
     )
 
-    # Only remove services if it is the last account and not read only
-    # Deprecated and will be removed in 2022.4 when only buttons are supported.
-    if len(hass.data[DOMAIN]) == 1 and not getattr(
-        hass.data[DOMAIN][entry.entry_id], CONF_READ_ONLY
-    ):
-        services = list(SERVICE_MAP) + [SERVICE_UPDATE_STATE]
-        for service in services:
-            hass.services.async_remove(DOMAIN, service)
-
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
 
@@ -160,7 +132,7 @@ async def async_update_options(hass: HomeAssistant, config_entry: ConfigEntry) -
     await hass.config_entries.async_reload(config_entry.entry_id)
 
 
-class BMWConnectedDriveBaseEntity(CoordinatorEntity, Entity):
+class BMWBaseEntity(CoordinatorEntity, Entity):
     """Common base for BMW entities."""
 
     coordinator: BMWDataUpdateCoordinator
@@ -169,7 +141,7 @@ class BMWConnectedDriveBaseEntity(CoordinatorEntity, Entity):
     def __init__(
         self,
         coordinator: BMWDataUpdateCoordinator,
-        vehicle: ConnectedDriveVehicle,
+        vehicle: MyBMWVehicle,
     ) -> None:
         """Initialize entity."""
         super().__init__(coordinator)

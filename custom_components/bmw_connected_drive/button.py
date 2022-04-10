@@ -1,19 +1,19 @@
-"""Support for BMW connected drive button entities."""
+"""Support for MyBMW button entities."""
 from __future__ import annotations
 
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from bimmer_connected.remote_services import RemoteServiceStatus
-from bimmer_connected.vehicle import ConnectedDriveVehicle
+from bimmer_connected.vehicle import MyBMWVehicle
+from bimmer_connected.vehicle.remote_services import RemoteServiceStatus
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import BMWConnectedDriveBaseEntity
+from . import BMWBaseEntity
 from .const import DOMAIN
 
 if TYPE_CHECKING:
@@ -25,9 +25,7 @@ class BMWButtonEntityDescription(ButtonEntityDescription):
     """Class describing BMW button entities."""
 
     enabled_when_read_only: bool = False
-    remote_function: Callable[
-        [ConnectedDriveVehicle], RemoteServiceStatus
-    ] | None = None
+    remote_function: Callable[[MyBMWVehicle], RemoteServiceStatus] | None = None
     account_function: Callable[[BMWDataUpdateCoordinator], Coroutine] | None = None
 
 
@@ -77,7 +75,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the BMW ConnectedDrive buttons from config entry."""
+    """Set up the BMW buttons from config entry."""
     coordinator: BMWDataUpdateCoordinator = hass.data[DOMAIN][config_entry.entry_id]
 
     entities: list[BMWButton] = []
@@ -95,15 +93,15 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class BMWButton(BMWConnectedDriveBaseEntity, ButtonEntity):
-    """Representation of a BMW Connected Drive button."""
+class BMWButton(BMWBaseEntity, ButtonEntity):
+    """Representation of a MyBMW button."""
 
     entity_description: BMWButtonEntityDescription
 
     def __init__(
         self,
         coordinator: BMWDataUpdateCoordinator,
-        vehicle: ConnectedDriveVehicle,
+        vehicle: MyBMWVehicle,
         description: BMWButtonEntityDescription,
     ) -> None:
         """Initialize BMW vehicle sensor."""
@@ -116,8 +114,11 @@ class BMWButton(BMWConnectedDriveBaseEntity, ButtonEntity):
     async def async_press(self) -> None:
         """Press the button."""
         if self.entity_description.remote_function:
-            await self.hass.async_add_executor_job(
-                self.entity_description.remote_function(self.vehicle)
-            )
+            await self.entity_description.remote_function(self.vehicle)
         elif self.entity_description.account_function:
             await self.entity_description.account_function(self.coordinator)
+
+        # Always update HA states after a button was executed.
+        # BMW remote services that change the vehicle's state update the local object
+        # when executing the service, so only the HA state machine needs further updates.
+        self.coordinator.notify_listeners()
