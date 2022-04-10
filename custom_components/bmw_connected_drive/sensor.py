@@ -97,8 +97,8 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         unit_imperial=LENGTH_MILES,
         value=lambda x, hass: convert_and_round(x, hass.config.units.length, 2),
     ),
-    "remaining_range_combined": BMWSensorEntityDescription(
-        key="remaining_range_combined",
+    "remaining_range_total": BMWSensorEntityDescription(
+        key="remaining_range_total",
         key_class="fuel_and_battery",
         icon="mdi:map-marker-distance",
         unit_metric=LENGTH_KILOMETERS,
