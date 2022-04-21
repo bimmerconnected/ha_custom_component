@@ -1,9 +1,9 @@
-"""Reads vehicle status from BMW connected drive portal."""
+"""Reads vehicle status from MyBMW portal."""
 from __future__ import annotations
 
 from typing import Any
 
-from bimmer_connected.vehicle import ConnectedDriveVehicle
+from bimmer_connected.vehicle import MyBMWVehicle
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
@@ -132,7 +132,7 @@ async def async_update_options(hass: HomeAssistant, config_entry: ConfigEntry) -
     await hass.config_entries.async_reload(config_entry.entry_id)
 
 
-class BMWConnectedDriveBaseEntity(CoordinatorEntity, Entity):
+class BMWBaseEntity(CoordinatorEntity, Entity):
     """Common base for BMW entities."""
 
     coordinator: BMWDataUpdateCoordinator
@@ -141,7 +141,7 @@ class BMWConnectedDriveBaseEntity(CoordinatorEntity, Entity):
     def __init__(
         self,
         coordinator: BMWDataUpdateCoordinator,
-        vehicle: ConnectedDriveVehicle,
+        vehicle: MyBMWVehicle,
     ) -> None:
         """Initialize entity."""
         super().__init__(coordinator)

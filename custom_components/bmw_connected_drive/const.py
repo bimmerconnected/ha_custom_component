@@ -1,4 +1,4 @@
-"""Const file for the BMW Connected Drive integration."""
+"""Const file for the MyBMW integration."""
 from homeassistant.const import (
     LENGTH_KILOMETERS,
     LENGTH_MILES,
@@ -7,7 +7,7 @@ from homeassistant.const import (
 )
 
 DOMAIN = "bmw_connected_drive"
-ATTRIBUTION = "Data provided by BMW Connected Drive"
+ATTRIBUTION = "Data provided by MyBMW"
 
 ATTR_DIRECTION = "direction"
 ATTR_VIN = "vin"
