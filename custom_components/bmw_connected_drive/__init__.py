@@ -23,14 +23,7 @@ from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import (
-    ATTR_VIN,
-    ATTRIBUTION,
-    CONF_READ_ONLY,
-    DATA_HASS_CONFIG,
-    DOMAIN,
-    SERVICE_MAP,
-)
+from .const import ATTR_VIN, ATTRIBUTION, CONF_READ_ONLY, DATA_HASS_CONFIG, DOMAIN
 from .coordinator import BMWDataUpdateCoordinator
 
 CONFIG_SCHEMA = cv.removed(DOMAIN, raise_if_present=False)
@@ -99,18 +92,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    # Service to manually trigger updates for all accounts.
-    # Deprecated and will be removed in 2022.4 when only buttons are supported.
-    hass.services.async_register(
-        DOMAIN, SERVICE_UPDATE_STATE, coordinator.async_request_refresh
-    )
-    # Add all other services
-    # Deprecated and will be removed in 2022.4 when only buttons are supported.
-    for service in SERVICE_MAP:
-        hass.services.async_register(
-            DOMAIN, service, coordinator.async_execute_service, schema=SERVICE_SCHEMA
-        )
-
     # Set up all platforms except notify
     hass.config_entries.async_setup_platforms(
         entry, [platform for platform in PLATFORMS if platform != Platform.NOTIFY]
@@ -139,15 +120,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(
         entry, [platform for platform in PLATFORMS if platform != Platform.NOTIFY]
     )
-
-    # Only remove services if it is the last account and not read only
-    # Deprecated and will be removed in 2022.4 when only buttons are supported.
-    if len(hass.data[DOMAIN]) == 1 and not getattr(
-        hass.data[DOMAIN][entry.entry_id], CONF_READ_ONLY
-    ):
-        services = list(SERVICE_MAP) + [SERVICE_UPDATE_STATE]
-        for service in services:
-            hass.services.async_remove(DOMAIN, service)
 
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
@@ -186,3 +158,8 @@ class BMWConnectedDriveBaseEntity(CoordinatorEntity, Entity):
             model=vehicle.name,
             name=f"{vehicle.brand.name} {vehicle.name}",
         )
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass."""
+        await super().async_added_to_hass()
+        self._handle_coordinator_update()
