@@ -99,6 +99,15 @@ SENSOR_TYPES: tuple[BMWBinarySensorEntityDescription, ...] = (
         attr_fn=lambda s, u: {lid.name: lid.state.value for lid in s.lids},
     ),
     BMWBinarySensorEntityDescription(
+        key="roof",
+        name="Roof",
+        device_class=BinarySensorDeviceClass.OPENING,
+        icon="mdi:car-convertible",
+        # device class opening: On means open, Off means closed
+        value_fn=lambda s: not s.roof_closed,
+        
+    ),
+    BMWBinarySensorEntityDescription(
         key="windows",
         name="Windows",
         device_class=BinarySensorDeviceClass.OPENING,
