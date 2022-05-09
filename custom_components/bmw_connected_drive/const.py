@@ -15,6 +15,7 @@ ATTR_VIN = "vin"
 CONF_ALLOWED_REGIONS = ["china", "north_america", "rest_of_world"]
 CONF_READ_ONLY = "read_only"
 CONF_ACCOUNT = "account"
+CONF_REFRESH_TOKEN = "refresh_token"
 
 DATA_HASS_CONFIG = "hass_config"
 

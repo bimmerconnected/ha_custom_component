@@ -7,15 +7,7 @@ from bimmer_connected.vehicle import MyBMWVehicle
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    CONF_DEVICE_ID,
-    CONF_ENTITY_ID,
-    CONF_NAME,
-    CONF_PASSWORD,
-    CONF_REGION,
-    CONF_USERNAME,
-    Platform,
-)
+from homeassistant.const import CONF_DEVICE_ID, CONF_ENTITY_ID, CONF_NAME, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import discovery
 import homeassistant.helpers.config_validation as cv
@@ -82,10 +74,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Set up one data coordinator per account/config entry
     coordinator = BMWDataUpdateCoordinator(
         hass,
-        username=entry.data[CONF_USERNAME],
-        password=entry.data[CONF_PASSWORD],
-        region=entry.data[CONF_REGION],
-        read_only=entry.options[CONF_READ_ONLY],
+        entry=entry,
     )
     await coordinator.async_config_entry_first_refresh()
 
