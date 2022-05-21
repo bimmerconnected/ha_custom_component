@@ -63,7 +63,7 @@ class BMWLock(BMWBaseEntity, LockEntity):
             # Optimistic state set here because it takes some time before the
             # update callback response
             self._attr_is_locked = True
-            self.async_schedule_update_ha_state()
+            self._async_write_ha_state()
         await self.vehicle.remote_services.trigger_remote_door_lock()
 
     async def async_unlock(self, **kwargs: Any) -> None:
@@ -74,7 +74,7 @@ class BMWLock(BMWBaseEntity, LockEntity):
             # Optimistic state set here because it takes some time before the
             # update callback response
             self._attr_is_locked = False
-            self.async_schedule_update_ha_state()
+            self._async_write_ha_state()
         await self.vehicle.remote_services.trigger_remote_door_unlock()
 
     @callback
@@ -83,15 +83,14 @@ class BMWLock(BMWBaseEntity, LockEntity):
         _LOGGER.debug("Updating lock data of %s", self.vehicle.name)
         # Only update the HA state machine if the vehicle reliably reports its lock state
         if self.door_lock_state_available:
-            vehicle_state = self.vehicle.status
-            self._attr_is_locked = vehicle_state.door_lock_state in {
+            self._attr_is_locked = self.vehicle.doors_and_windows.door_lock_state in {
                 LockState.LOCKED,
                 LockState.SECURED,
             }
             self._attr_extra_state_attributes = dict(
                 self._attrs,
                 **{
-                    "door_lock_state": vehicle_state.door_lock_state.value,
+                    "door_lock_state": self.vehicle.doors_and_windows.door_lock_state.value,
                 },
             )
 

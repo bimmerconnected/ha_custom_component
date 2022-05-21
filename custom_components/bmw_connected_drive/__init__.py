@@ -11,7 +11,7 @@ from homeassistant.const import CONF_DEVICE_ID, CONF_ENTITY_ID, CONF_NAME, Platf
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import discovery
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity import DeviceInfo, Entity
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -121,7 +121,7 @@ async def async_update_options(hass: HomeAssistant, config_entry: ConfigEntry) -
     await hass.config_entries.async_reload(config_entry.entry_id)
 
 
-class BMWBaseEntity(CoordinatorEntity, Entity):
+class BMWBaseEntity(CoordinatorEntity[BMWDataUpdateCoordinator]):
     """Common base for BMW entities."""
 
     coordinator: BMWDataUpdateCoordinator

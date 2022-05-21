@@ -59,9 +59,7 @@ class BMWDeviceTracker(BMWBaseEntity, TrackerEntity):
     @property
     def extra_state_attributes(self) -> dict:
         """Return entity specific state attributes."""
-        return dict(
-            self._attrs, **{ATTR_DIRECTION: self.vehicle.vehicle_location.heading}
-        )
+        return {**self._attrs, ATTR_DIRECTION: self.vehicle.vehicle_location.heading}
 
     @property
     def latitude(self) -> float | None:
