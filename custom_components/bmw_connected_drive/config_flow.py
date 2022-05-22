@@ -104,6 +104,16 @@ class BMWOptionsFlow(config_entries.OptionsFlow):
     ) -> FlowResult:
         """Handle the initial step."""
         if user_input is not None:
+            # Manually update & reload the config entry after options change.
+            # Required as each successful login will store the latest refresh_token
+            # using async_update_entry, which would otherwise trigger a full reload
+            # if the options would be refreshed using a listener.
+            changed = self.hass.config_entries.async_update_entry(
+                self.config_entry,
+                options=user_input,
+            )
+            if changed:
+                await self.hass.config_entries.async_reload(self.config_entry.entry_id)
             return self.async_create_entry(title="", data=user_input)
         return self.async_show_form(
             step_id="account_options",
