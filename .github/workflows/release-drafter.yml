@@ -1,0 +1,60 @@
+name: Release Drafter
+
+on:
+  push:
+    # branches to consider in the event; optional, defaults to all
+    branches:
+      - master
+
+jobs:
+  update_release_draft:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate CalVer version
+        id: calver
+        shell: python
+        run: |
+          import json
+          import urllib.request
+          from datetime import date
+
+          dat = date.today().strftime("%Y%m%d")
+          req_rel = urllib.request.Request(
+              "https://api.github.com/repos/bimmerconnected/ha_custom_component/releases/latest",
+              headers={"Accept": "application/vnd.github+json"}
+          )
+          with urllib.request.urlopen(req_rel) as f:
+              rel = json.loads(f.read())
+
+          major, minor = rel["tag_name"].split(".")
+
+          if major == dat:
+              minor = int(minor) + 1
+          else:
+              major = dat
+              minor = 1
+
+          version = f"{major}.{minor}"
+          print(f"::set-output name=version::{version}")
+          print(f"Version set to {version}")
+
+
+          req_com = urllib.request.Request(
+              f"https://api.github.com/repos/bimmerconnected/ha_custom_component/commits?since={rel['created_at']}",
+              headers={"Accept": "application/vnd.github+json"}
+          )
+          with urllib.request.urlopen(req_com) as f:
+              com = json.loads(f.read())
+
+          changes = "|||".join(["* {} ({})".format(next(iter(c["commit"]["message"].split("\n"))), c["sha"]) for c in com])
+          print(f"::set-output name=changes::{changes}")
+          print(f"Changes set to:\n{changes}")
+      # Drafts your next Release notes as Pull Requests are merged into "master"
+      - uses: release-drafter/release-drafter@v5.20.0
+        with:
+          tag: ${{ steps.calver.outputs.version }}
+          name: ${{ steps.calver.outputs.version }}
+          version: ${{ steps.calver.outputs.version }}
+          footer: ${{ steps.calver.outputs.changes }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
