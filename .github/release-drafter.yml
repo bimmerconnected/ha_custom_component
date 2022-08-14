@@ -1,5 +1,2 @@
 template: |
   ## What's changed
-replacers:
-  - search: '|||'
-    replace: '<br>'

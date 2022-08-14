@@ -46,7 +46,7 @@ jobs:
           with urllib.request.urlopen(req_com) as f:
               com = json.loads(f.read())
 
-          changes = "|||".join(["* {} ({})".format(next(iter(c["commit"]["message"].split("\n"))), c["sha"]) for c in com])
+          changes = "%0A".join(["* {} ({})".format(next(iter(c["commit"]["message"].split("\n"))), c["sha"]) for c in com[:-1]])
           print(f"::set-output name=changes::{changes}")
           print(f"Changes set to:\n{changes}")
       # Drafts your next Release notes as Pull Requests are merged into "master"
