@@ -15,7 +15,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import LENGTH, PERCENTAGE, VOLUME
+from homeassistant.const import LENGTH, PERCENTAGE, VOLUME, UnitOfElectricCurrent
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -79,6 +79,35 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         key_class="fuel_and_battery",
         unit_type=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
+    ),
+    "ac_current_limit": BMWSensorEntityDescription(
+        key="ac_current_limit",
+        name="AC current limit",
+        key_class="charging_profile",
+        unit_type=UnitOfElectricCurrent.AMPERE,
+        icon="mdi:current-ac",
+        entity_registry_enabled_default=False,
+    ),
+    "charging_target": BMWSensorEntityDescription(
+        key="charging_target",
+        name="Charging target",
+        key_class="fuel_and_battery",
+        unit_type=PERCENTAGE,
+        icon="mdi:battery-charging-high",
+    ),
+    "charging_mode": BMWSensorEntityDescription(
+        key="charging_mode",
+        name="Charging mode",
+        key_class="charging_profile",
+        icon="mdi:ev-station",
+        value=lambda x, y: x.value,
+    ),
+    "charging_preferences": BMWSensorEntityDescription(
+        key="charging_preferences",
+        name="Charging preferences",
+        key_class="charging_profile",
+        icon="mdi:ev-station",
+        value=lambda x, y: x.value,
     ),
     # --- Specific ---
     "mileage": BMWSensorEntityDescription(
