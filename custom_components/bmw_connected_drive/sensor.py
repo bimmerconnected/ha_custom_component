@@ -102,13 +102,6 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         icon="mdi:ev-station",
         value=lambda x, y: x.value,
     ),
-    "charging_preferences": BMWSensorEntityDescription(
-        key="charging_preferences",
-        name="Charging preferences",
-        key_class="charging_profile",
-        icon="mdi:ev-station",
-        value=lambda x, y: x.value,
-    ),
     # --- Specific ---
     "mileage": BMWSensorEntityDescription(
         key="mileage",
