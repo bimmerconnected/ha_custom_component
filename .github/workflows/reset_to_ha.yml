@@ -40,7 +40,7 @@ jobs:
       - name: Copy component from HA into workspace
         run: |
           cd ${{ github.workspace }}/custom_components/bmw_connected_drive
-          sed -i "$(($(wc -l < manifest.json) - 1))i\\  \"version\": \"${{ env.HA_VERSION }}-custom\",\\" manifest.json
+          sed -i "$(($(wc -l < manifest.json) - 1))i\\  \"version\": \"${{ env.HA_VERSION }}\",\\" manifest.json
 
       - name: Create PR with new changes
         uses: peter-evans/create-pull-request@v3
