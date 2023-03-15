@@ -37,7 +37,7 @@ jobs:
             ${{ runner.temp }}/core/homeassistant/components/bmw_connected_drive/ \
             ${{ github.workspace }}/custom_components/bmw_connected_drive
 
-      - name: Copy component from HA into workspace
+      - name: Update version number
         run: |
           cd ${{ github.workspace }}/custom_components/bmw_connected_drive
           sed -i "$(($(wc -l < manifest.json) - 1))i\\  \"version\": \"${{ env.HA_VERSION }}\",\\" manifest.json
