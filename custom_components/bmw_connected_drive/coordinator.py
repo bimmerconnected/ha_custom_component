@@ -6,14 +6,14 @@ import logging
 
 from bimmer_connected.account import MyBMWAccount
 from bimmer_connected.api.regions import get_region_from_name
-from bimmer_connected.models import GPSPosition
-from httpx import HTTPError, HTTPStatusError, TimeoutException
+from bimmer_connected.models import GPSPosition, MyBMWAPIError, MyBMWAuthError
+from httpx import RequestError
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_REGION, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import CONF_READ_ONLY, CONF_REFRESH_TOKEN, DOMAIN
 
@@ -56,20 +56,19 @@ class BMWDataUpdateCoordinator(DataUpdateCoordinator[None]):
 
         try:
             await self.account.get_vehicles()
-        except (HTTPError, HTTPStatusError, TimeoutException) as err:
-            if isinstance(err, HTTPStatusError) and err.response.status_code == 429:
-                # Increase scan interval to not jump to not bring up the issue next time
-                self.update_interval = timedelta(
-                    seconds=DEFAULT_SCAN_INTERVAL_SECONDS * 3
+        except MyBMWAuthError as err:
+            # Clear refresh token and trigger reauth
+            self._update_config_entry_refresh_token(None)
+            raise ConfigEntryAuthFailed(str(err)) from err
+
+        except (MyBMWAPIError, RequestError) as err:
+            if self.last_update_success is True:
+                _LOGGER.warning(
+                    "Error communicating with BMW API (%s): %s",
+                    type(err).__name__,
+                    err,
                 )
-            if isinstance(err, HTTPStatusError) and err.response.status_code in (
-                401,
-                403,
-            ):
-                # Clear refresh token only and trigger reauth
-                self._update_config_entry_refresh_token(None)
-                raise ConfigEntryAuthFailed(str(err)) from err
-            raise UpdateFailed(f"Error communicating with BMW API: {err}") from err
+                self.last_update_success = False
 
         if self.account.refresh_token != old_refresh_token:
             self._update_config_entry_refresh_token(self.account.refresh_token)
@@ -79,8 +78,8 @@ class BMWDataUpdateCoordinator(DataUpdateCoordinator[None]):
                 self.account.refresh_token,
             )
 
-        # Reset scan interval after successful update
-        self.update_interval = timedelta(seconds=DEFAULT_SCAN_INTERVAL_SECONDS)
+        if self.last_update_success is False:
+            _LOGGER.info("Reconnected to BMW API")
 
     def _update_config_entry_refresh_token(self, refresh_token: str | None) -> None:
         """Update or delete the refresh_token in the Config Entry."""
