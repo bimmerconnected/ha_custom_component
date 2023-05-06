@@ -7,5 +7,5 @@
   "iot_class": "cloud_polling",
   "loggers": ["bimmer_connected"],
   "version": "2023.5.0",
-  "requirements": ["bimmer_connected==0.13.2"]
+  "requirements": ["bimmer_connected==0.13.3"]
 }
