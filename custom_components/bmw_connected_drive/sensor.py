@@ -95,13 +95,6 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         unit_type=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
     ),
-    "charging_mode": BMWSensorEntityDescription(
-        key="charging_mode",
-        name="Charging mode",
-        key_class="charging_profile",
-        icon="mdi:ev-station",
-        value=lambda x, y: x.value,
-    ),
     # --- Specific ---
     "mileage": BMWSensorEntityDescription(
         key="mileage",
