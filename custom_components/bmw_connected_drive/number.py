@@ -40,7 +40,7 @@ class BMWNumberEntityDescription(NumberEntityDescription, BMWRequiredKeysMixin):
 
     is_available: Callable[[MyBMWVehicle], bool] = lambda _: False
     dynamic_options: Callable[[MyBMWVehicle], list[str]] | None = None
-
+    mode: NumberMode | None = None  # for HA<2023.6
 
 NUMBER_TYPES: list[BMWNumberEntityDescription] = [
     BMWNumberEntityDescription(
