@@ -13,6 +13,7 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import LENGTH, PERCENTAGE, VOLUME, UnitOfElectricCurrent
@@ -102,6 +103,7 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         icon="mdi:speedometer",
         unit_type=LENGTH,
         value=lambda x, hass: convert_and_round(x, hass.config.units.length, 2),
+        state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     "remaining_range_total": BMWSensorEntityDescription(
         key="remaining_range_total",
