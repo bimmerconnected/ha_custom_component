@@ -15,7 +15,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import LENGTH, PERCENTAGE, VOLUME, UnitOfElectricCurrent
+from homeassistant.const import LENGTH, PERCENTAGE, VOLUME, UnitOfElectricCurrent,UnitOfPressure, PRESSURE
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -142,6 +142,45 @@ SENSOR_TYPES: dict[str, BMWSensorEntityDescription] = {
         icon="mdi:gas-station",
         unit_type=PERCENTAGE,
     ),
+    "front_left": BMWSensorEntityDescription(
+        key="front_left",
+        name="Front left tire pressure",
+        translation_key="front_left",
+        key_class="tires",
+        icon="mdi:car-tire-alert",
+        unit_type=PRESSURE,
+        value=lambda x, hass: convert_and_round(ValueWithUnit(value=x.current_pressure,unit="kPa"), hass.config.units.pressure, 2),
+    ),
+
+    "front_right": BMWSensorEntityDescription(
+        key="front_right",
+        name="Front right tire pressure",
+        translation_key="front_right",
+        key_class="tires",
+        icon="mdi:car-tire-alert",
+        unit_type=PRESSURE,
+        value=lambda x, hass: convert_and_round(ValueWithUnit(value=x.current_pressure,unit="kPa"), hass.config.units.pressure, 2),
+    ),
+
+    "rear_left": BMWSensorEntityDescription(
+        key="rear_left",
+        name="Rear left tire pressure",
+        translation_key="rear_left",
+        key_class="tires",
+        icon="mdi:car-tire-alert",
+        unit_type=PRESSURE,
+        value=lambda x, hass: convert_and_round(ValueWithUnit(value=x.current_pressure,unit="kPa"), hass.config.units.pressure, 2),
+    ),
+
+    "rear_right": BMWSensorEntityDescription(
+        key="rear_right",
+        name="Rear right tire pressure",
+        translation_key="rear_right",
+        key_class="tires",
+        icon="mdi:car-tire-alert",
+        unit_type=PRESSURE,
+        value=lambda x, hass: convert_and_round(ValueWithUnit(value=x.current_pressure,unit="kPa"), hass.config.units.pressure, 2),
+    ),
 }
 
 
@@ -156,10 +195,15 @@ async def async_setup_entry(
     entities: list[BMWSensor] = []
 
     for vehicle in coordinator.account.vehicles:
+        extended_attributes = vehicle.available_attributes
+
+        for extra in ["front_left", "front_right", "rear_left", "rear_right"]:
+            extended_attributes.append(extra)
+
         entities.extend(
             [
                 BMWSensor(coordinator, vehicle, description)
-                for attribute_name in vehicle.available_attributes
+                for attribute_name in extended_attributes
                 if (description := SENSOR_TYPES.get(attribute_name))
             ]
         )
