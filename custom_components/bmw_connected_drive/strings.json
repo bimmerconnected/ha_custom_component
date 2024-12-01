@@ -215,5 +215,11 @@
     "missing_captcha": {
       "message": "Login requires captcha validation"
     }
+  },
+  "issues": {
+    "stop_using_custom_component": {
+      "title": "Stop using custom component",
+      "description": "The custom component for BMW Connected Drive is outdated. Please remove the custom component and use the version shipped with Home Assistant."
+    }
   }
 }

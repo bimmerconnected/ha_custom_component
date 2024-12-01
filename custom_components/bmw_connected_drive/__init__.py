@@ -14,6 +14,7 @@ from homeassistant.helpers import (
     device_registry as dr,
     discovery,
     entity_registry as er,
+    issue_registry as ir,
 )
 import homeassistant.helpers.config_validation as cv
 
@@ -129,6 +130,16 @@ async def _async_migrate_entries(
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up BMW Connected Drive from a config entry."""
+
+    ir.async_create_issue(
+        hass,
+        DOMAIN,
+        "stop_using_custom_component",
+        version="2024.12.0",
+        is_fixable=False,
+        severity=ir.IssueSeverity.ERROR,
+        translation_key="stop_using_custom_component",
+    )
 
     _async_migrate_options_from_data_if_missing(hass, entry)
 

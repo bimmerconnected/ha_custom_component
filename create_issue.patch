@@ -1,0 +1,45 @@
+diff --git a/custom_components/bmw_connected_drive/__init__.py b/custom_components/bmw_connected_drive/__init__.py
+index 9e43cfc..9921e3f 100644
+--- a/custom_components/bmw_connected_drive/__init__.py
++++ b/custom_components/bmw_connected_drive/__init__.py
+@@ -14,6 +14,7 @@ from homeassistant.helpers import (
+     device_registry as dr,
+     discovery,
+     entity_registry as er,
++    issue_registry as ir,
+ )
+ import homeassistant.helpers.config_validation as cv
+ 
+@@ -130,6 +131,16 @@ async def _async_migrate_entries(
+ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+     """Set up BMW Connected Drive from a config entry."""
+ 
++    ir.async_create_issue(
++        hass,
++        DOMAIN,
++        "stop_using_custom_component",
++        version="2024.12.0",
++        is_fixable=False,
++        severity=ir.IssueSeverity.ERROR,
++        translation_key="stop_using_custom_component",
++    )
++
+     _async_migrate_options_from_data_if_missing(hass, entry)
+ 
+     await _async_migrate_entries(hass, entry)
+diff --git a/custom_components/bmw_connected_drive/strings.json b/custom_components/bmw_connected_drive/strings.json
+index 8078971..65be86f 100644
+--- a/custom_components/bmw_connected_drive/strings.json
++++ b/custom_components/bmw_connected_drive/strings.json
+@@ -215,5 +215,11 @@
+     "missing_captcha": {
+       "message": "Login requires captcha validation"
+     }
++  },
++  "issues": {
++    "stop_using_custom_component": {
++      "title": "Stop using custom component",
++      "description": "The custom component for BMW Connected Drive is outdated. Please remove the custom component and use the version shipped with Home Assistant."
++    }
+   }
+ }
