@@ -10,31 +10,24 @@ from bimmer_connected.vehicle import MyBMWVehicle
 from bimmer_connected.vehicle.fuel_and_battery import ChargingState
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import BMWBaseEntity
-from .const import DOMAIN
+from . import BMWConfigEntry
 from .coordinator import BMWDataUpdateCoordinator
+from .entity import BMWBaseEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass
-class BMWRequiredKeysMixin:
-    """Mixin for required keys."""
+@dataclass(frozen=True, kw_only=True)
+class BMWSwitchEntityDescription(SwitchEntityDescription):
+    """Describes BMW switch entity."""
 
     value_fn: Callable[[MyBMWVehicle], bool]
     remote_service_on: Callable[[MyBMWVehicle], Coroutine[Any, Any, Any]]
     remote_service_off: Callable[[MyBMWVehicle], Coroutine[Any, Any, Any]]
-
-
-@dataclass
-class BMWSwitchEntityDescription(SwitchEntityDescription, BMWRequiredKeysMixin):
-    """Describes BMW switch entity."""
-
     is_available: Callable[[MyBMWVehicle], bool] = lambda _: False
     dynamic_options: Callable[[MyBMWVehicle], list[str]] | None = None
 
@@ -51,32 +44,30 @@ CHARGING_STATE_ON = {
 NUMBER_TYPES: list[BMWSwitchEntityDescription] = [
     BMWSwitchEntityDescription(
         key="climate",
-        name="Climate",
+        translation_key="climate",
         is_available=lambda v: v.is_remote_climate_stop_enabled,
         value_fn=lambda v: v.climate.is_climate_on,
         remote_service_on=lambda v: v.remote_services.trigger_remote_air_conditioning(),
         remote_service_off=lambda v: v.remote_services.trigger_remote_air_conditioning_stop(),
-        icon="mdi:fan",
     ),
     BMWSwitchEntityDescription(
         key="charging",
-        name="Charging",
+        translation_key="charging",
         is_available=lambda v: v.is_remote_charge_stop_enabled,
         value_fn=lambda v: v.fuel_and_battery.charging_status in CHARGING_STATE_ON,
         remote_service_on=lambda v: v.remote_services.trigger_charge_start(),
         remote_service_off=lambda v: v.remote_services.trigger_charge_stop(),
-        icon="mdi:ev-station",
     ),
 ]
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    config_entry: BMWConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the MyBMW switch from config entry."""
-    coordinator: BMWDataUpdateCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = config_entry.runtime_data.coordinator
 
     entities: list[BMWSwitch] = []
 

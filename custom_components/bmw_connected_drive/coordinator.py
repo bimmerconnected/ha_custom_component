@@ -1,4 +1,5 @@
 """Coordinator for BMW."""
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -6,7 +7,12 @@ import logging
 
 from bimmer_connected.account import MyBMWAccount
 from bimmer_connected.api.regions import get_region_from_name
-from bimmer_connected.models import GPSPosition, MyBMWAPIError, MyBMWAuthError
+from bimmer_connected.models import (
+    GPSPosition,
+    MyBMWAPIError,
+    MyBMWAuthError,
+    MyBMWCaptchaMissingError,
+)
 from httpx import RequestError
 
 from homeassistant.config_entries import ConfigEntry
@@ -14,11 +20,10 @@ from homeassistant.const import CONF_PASSWORD, CONF_REGION, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util.ssl import get_default_context
 
-from .const import CONF_GCID, CONF_READ_ONLY, CONF_REFRESH_TOKEN, DOMAIN
+from .const import CONF_GCID, CONF_READ_ONLY, CONF_REFRESH_TOKEN, DOMAIN, SCAN_INTERVALS
 
-DEFAULT_SCAN_INTERVAL_SECONDS = 300
-SCAN_INTERVAL = timedelta(seconds=DEFAULT_SCAN_INTERVAL_SECONDS)
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -34,8 +39,7 @@ class BMWDataUpdateCoordinator(DataUpdateCoordinator[None]):
             entry.data[CONF_PASSWORD],
             get_region_from_name(entry.data[CONF_REGION]),
             observer_position=GPSPosition(hass.config.latitude, hass.config.longitude),
-            # Force metric system as BMW API apparently only returns metric values now
-            use_metric_units=True,
+            verify=get_default_context(),
         )
         self.read_only = entry.options[CONF_READ_ONLY]
         self._entry = entry
@@ -50,8 +54,11 @@ class BMWDataUpdateCoordinator(DataUpdateCoordinator[None]):
             hass,
             _LOGGER,
             name=f"{DOMAIN}-{entry.data['username']}",
-            update_interval=SCAN_INTERVAL,
+            update_interval=timedelta(seconds=SCAN_INTERVALS[entry.data[CONF_REGION]]),
         )
+
+        # Default to false on init so _async_update_data logic works
+        self.last_update_success = False
 
     async def _async_update_data(self) -> None:
         """Fetch data from BMW."""
@@ -59,8 +66,17 @@ class BMWDataUpdateCoordinator(DataUpdateCoordinator[None]):
 
         try:
             await self.account.get_vehicles()
+        except MyBMWCaptchaMissingError as err:
+            # If a captcha is required (user/password login flow), always trigger the reauth flow
+            raise ConfigEntryAuthFailed(
+                translation_domain=DOMAIN,
+                translation_key="missing_captcha",
+            ) from err
         except MyBMWAuthError as err:
-            # Clear refresh token and trigger reauth
+            # Allow one retry interval before raising AuthFailed to avoid flaky API issues
+            if self.last_update_success:
+                raise UpdateFailed(err) from err
+            # Clear refresh token and trigger reauth if previous update failed as well
             self._update_config_entry_refresh_token(None)
             raise ConfigEntryAuthFailed(err) from err
         except (MyBMWAPIError, RequestError) as err:
@@ -68,11 +84,6 @@ class BMWDataUpdateCoordinator(DataUpdateCoordinator[None]):
 
         if self.account.refresh_token != old_refresh_token:
             self._update_config_entry_refresh_token(self.account.refresh_token)
-            _LOGGER.debug(
-                "bimmer_connected: refresh token %s > %s",
-                old_refresh_token,
-                self.account.refresh_token,
-            )
 
     def _update_config_entry_refresh_token(self, refresh_token: str | None) -> None:
         """Update or delete the refresh_token in the Config Entry."""
