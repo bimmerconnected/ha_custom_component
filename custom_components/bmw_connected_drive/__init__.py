@@ -135,7 +135,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass,
         DOMAIN,
         "stop_using_custom_component",
-        version="2024.12.0",
         is_fixable=False,
         severity=ir.IssueSeverity.ERROR,
         translation_key="stop_using_custom_component",

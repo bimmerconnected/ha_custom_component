@@ -18,7 +18,6 @@ index 9e43cfc..9921e3f 100644
 +        hass,
 +        DOMAIN,
 +        "stop_using_custom_component",
-+        version="2024.12.0",
 +        is_fixable=False,
 +        severity=ir.IssueSeverity.ERROR,
 +        translation_key="stop_using_custom_component",
